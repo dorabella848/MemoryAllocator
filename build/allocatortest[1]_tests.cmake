@@ -1,0 +1,5 @@
+add_test([=[allocator.malloc]=]  /home/internaccount/Downloads/CodeDynamic/build/allocatortest [==[--gtest_filter=allocator.malloc]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[allocator.malloc]=]  PROPERTIES WORKING_DIRECTORY /home/internaccount/Downloads/CodeDynamic/build SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[allocator.free]=]  /home/internaccount/Downloads/CodeDynamic/build/allocatortest [==[--gtest_filter=allocator.free]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[allocator.free]=]  PROPERTIES WORKING_DIRECTORY /home/internaccount/Downloads/CodeDynamic/build SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set(  allocatortest_TESTS allocator.malloc allocator.free)
