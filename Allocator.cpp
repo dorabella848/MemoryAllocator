@@ -1,11 +1,16 @@
 #include "Allocator.hpp"
 #include <list>
 
-Chunk* MemoryAllocator::getFreeHead(){
+Chunk* Allocator::getFreeHead(){
     return freeHead;
 };
-
-void MemoryAllocator::printChunks(){
+Chunk* Allocator::getOccHead(){
+    return occHead;
+}
+void* Allocator::getMemAddress(size_t index){
+    return &memoryPool[index];
+}
+void Allocator::printChunks(){
     cout<< "\nTotal Memory: " << memorySize << endl;
     // iterate through the free list and occ list
     // if the free chunk is at an earlier index then ouput that and go to next
@@ -29,164 +34,153 @@ void MemoryAllocator::printChunks(){
     cout << "ENDOFMEMORY}";
 };
 
-void *MemoryAllocator::malloc(size_t size)
+void *Allocator::malloc(size_t size)
 {
+    // Input sanitization
+    if(size <= 0){
+        return nullptr;
+    }
 
-    // Start at the beginning and traverse to end, if no space is found: defragment
     Chunk* freeCurrent = freeHead;
-    Chunk* occCurrent = occHead;
-    Chunk* prevOccChunk;
-    Chunk* prevFreeChunk;
-
-
+    Chunk* prevFreeChunk = nullptr;
+    
     while(freeCurrent != nullptr){
-        if((*freeCurrent).chunkSize >= size){
-            // Allocate required amount of bytes and if there is left over space break off and form a single free block
-            // current pos is (*current).startIndex
-            // Create occChunk
-            Chunk* newChunk = new Chunk((*freeCurrent).startIndex, size, false);
+        if(freeCurrent->chunkSize >= size){
+
+            // Create a new chunk for the allocated memory
+            Chunk* newChunk = new Chunk(freeCurrent->startIndex, size, false);
             newChunk->startLoc = &memoryPool[newChunk->startIndex];
-            (*freeCurrent).startIndex += size;
-            (*freeCurrent).chunkSize -= size;
             
-            if ((*freeCurrent).chunkSize == 0){
-                if (freeCurrent == freeHead){
+            // Update the existing free chunk
+            freeCurrent->startIndex += size;
+            freeCurrent->chunkSize -= size;
+            
+            if (freeCurrent->chunkSize == 0){
+                if (prevFreeChunk == nullptr){
                     freeHead = freeCurrent->next;
-                }
-                else{
+                } else {
                     prevFreeChunk->next = freeCurrent->next;
                 }
-                delete(freeCurrent);
-            
-            };
-            // Handle if occHead is nullptr
-            if(occHead == nullptr){
-                occHead = newChunk;
-                return newChunk->startLoc;
-            };
-            while(occCurrent != nullptr){
-                if ((*occCurrent).startIndex > (*newChunk).startIndex){
-                    
-                    if (occCurrent == occHead){
-                        newChunk->next = occHead;
-                        occHead = newChunk;
-                    }
-                    else{
-                        prevOccChunk->next = newChunk;
-                        newChunk->next = occCurrent;
-                    }
+                delete freeCurrent;
+            }
 
-                    return newChunk->startLoc;
-                };
-                
+            // Now, insert the new occupied chunk into the occupied list
+            Chunk* occCurrent = occHead;
+            Chunk* prevOccChunk = nullptr;
+            
+            // Special case for an empty occupied list
+            if (occHead == nullptr) {
+                occHead = newChunk;
+                return &(newChunk->startLoc);
+            }
+
+            // Insert in a sorted manner into the occupied list
+            while (occCurrent != nullptr && occCurrent->startIndex < newChunk->startIndex) {
                 prevOccChunk = occCurrent;
                 occCurrent = occCurrent->next;
-            };
-            // Handle if the new chunk is at the end of all occupied chunks
-            prevOccChunk->next = newChunk;
-            return newChunk->startLoc;
-        
-        };
-            
+            }
+
+            if (prevOccChunk == nullptr) { // Insert at the head
+                newChunk->next = occHead;
+                occHead = newChunk;
+            } else { // Insert in the middle or at the end
+                prevOccChunk->next = newChunk;
+                newChunk->next = occCurrent;
+            }
+
+            return &(newChunk->startLoc);
+        }
+
         prevFreeChunk = freeCurrent;
         freeCurrent = freeCurrent->next;
-    };
-    // Check if there would be enough enough memory after defragmentation
-    // if there is defragment and call (and return) malloc
+    }
 
-
-    // No available space
+    // No available space found after traversing the free list
     return nullptr;
-};
+}
 
-void MemoryAllocator::free(void* ptr) {
-    Chunk* occCurrent = occHead;
+
+void Allocator::free(void* ptr) {
+    Chunk* newFree = occHead;
     Chunk* prevChunk = nullptr;
     Chunk* freeCurrent = freeHead;
     Chunk* prevFreeChunk = nullptr;
 
-    while(occCurrent != nullptr){
-        if(occCurrent->startLoc == ptr){
+    while(newFree != nullptr){
+        if(newFree->startLoc == ptr){
+
             if(prevChunk == nullptr){
-                occHead = occCurrent->next;
+                occHead = newFree->next;
             }
             else{
-                prevChunk->next = occCurrent->next;
+                prevChunk->next = newFree->next;
             }
-            // add occCurent to free list and set it's free var to true
-            //freeCurrent->next = occCurrent;
-            (*occCurrent).Free = true;
+            // Update free state
+            newFree->Free = true;
+            newFree->next = nullptr;
             // handle if freecurrent should be free head
             if(freeHead == nullptr){
-                freeHead = occCurrent;
+                freeHead = newFree;
             }
             else{
                 while(freeCurrent != nullptr){
-                    // check if freeCurrent has a higher index than occCurrent
-                    // if it does then the occCurrent's next should point
+                    // check if freeCurrent has a higher index than newFree
+                    // if it does then the newFree's next should point
                     // to the prevFreeChunk's next and the prevFreeChunk's next
-                    // should be updated to the occCurrent
-                    if ((*freeCurrent).startIndex > (*occCurrent).startIndex){
-
+                    // should be updated to the newFree
+                    if ((*freeCurrent).startIndex > (*newFree).startIndex){
                         if(freeCurrent == freeHead){
-                            occCurrent->next = freeCurrent;
-                            freeHead = occCurrent;
-                            break;
+                            newFree->next = freeCurrent;
+                            freeHead = newFree;
                         }
 
                         // Check if the next free chunk is free
-                        if( (occCurrent->startIndex + occCurrent->chunkSize == (*(freeCurrent)).startIndex) ){
+                        if( (newFree->startIndex + newFree->chunkSize == (*(freeCurrent)).startIndex) ){
                             // if it is then add its chunk size to the
                             // current free chunk and delete the next chunk
-                            (*occCurrent).chunkSize += (*freeCurrent).chunkSize;
-                            occCurrent->next = freeCurrent->next;
+                            (*newFree).chunkSize += (*freeCurrent).chunkSize;
+                            newFree->next = freeCurrent->next;
                             delete freeCurrent;                        
                         }
                         // repeat for looking behind (delete current chunk add size to prev chunk)
-                        if( prevFreeChunk != nullptr && prevFreeChunk->startIndex + prevFreeChunk->chunkSize == occCurrent->startIndex){
-                            (*prevFreeChunk).chunkSize += (*occCurrent).chunkSize;
-                            prevFreeChunk->next = occCurrent->next;
-                            delete occCurrent;
+                        if( prevFreeChunk != nullptr && prevFreeChunk->startIndex + prevFreeChunk->chunkSize == newFree->startIndex){
+                            (*prevFreeChunk).chunkSize += (*newFree).chunkSize;
+                            prevFreeChunk->next = newFree->next;
+                            delete newFree;
                         }
                         break;
                     }
                     prevFreeChunk = freeCurrent;
                     freeCurrent = freeCurrent->next;
-                    // Handle if free chunk should be at then end of the free list
-                    
-                    if(freeCurrent == nullptr){
-                        // check behind
-                        if ((*prevFreeChunk).startIndex + prevFreeChunk->chunkSize == occCurrent->startIndex){
-                            (*prevFreeChunk).chunkSize += (*occCurrent).chunkSize;
-                            delete occCurrent;
-                        }
-                        else{
-                            prevFreeChunk->next = occCurrent;
-                        };
-                        
-                        
+                }
+                // Handle if free chunk should be at then end of the free list
+                if(freeCurrent == nullptr){
+                    // check behind
+                    if ((*prevFreeChunk).startIndex + prevFreeChunk->chunkSize == newFree->startIndex){
+                        (*prevFreeChunk).chunkSize += (*newFree).chunkSize;
+                        delete newFree;
+                    }
+                    else{
+                        prevFreeChunk->next = newFree;
                     }
                 }
             };
-            // If the program finds the position of the current occupied chunk no need to keep checking
+            // If the program finds the position of the current occupied chunk (newFree) no need to keep checking
             break;
         };
-        prevChunk = occCurrent;
-        occCurrent = occCurrent->next;
+        prevChunk = newFree;
+        newFree = newFree->next;
     };
 };
 
-void MemoryAllocator::defragment(){
+void Allocator::defragment(){
     // Move memory around to make one free block
 
     // Make the last free block the tail end of the big free block
     // Move memory blocks from left to right to the front of the free block tail
     Chunk* occCurrent = occHead;
     Chunk* freeCurrent = freeHead;
-    Chunk* freeTailChunk;
-
-
-
+    Chunk* prevFreeChunk = nullptr;
     // to remove a free chunk move all subsequent chunks up to the next free chunk
     // Get starting location of the first chunk
     // iterate through list and count chunk sizes
@@ -195,14 +189,21 @@ void MemoryAllocator::defragment(){
     // Update the affected chunks memory location and memory pool index
     // repeat for each memory block
     // if the current free block is the last in the free list then stop
-    size_t totalSize = 0;
+    int totalMove = 0;
+    int totalFree = 0;
     while(freeCurrent->next != nullptr){
-
         
         void* occStartLoc = nullptr;
-        while(occCurrent->startIndex < freeCurrent->next->startIndex && occCurrent->startIndex > freeCurrent->startIndex){
-            totalSize += occCurrent->chunkSize;
-            
+        totalMove = 0;
+        totalFree += freeCurrent->chunkSize;
+
+        // Catch occCurrent up to current freeCurrent index
+        while(occCurrent->startIndex < freeCurrent->startIndex){
+            occCurrent = occCurrent->next;
+        }
+
+        while(occCurrent != nullptr && occCurrent->startIndex < freeCurrent->next->startIndex){
+            totalMove += occCurrent->chunkSize;
             // Gets first occupied chunk start location
             if(occStartLoc == nullptr){
                 occStartLoc = occCurrent->startLoc;
@@ -210,22 +211,21 @@ void MemoryAllocator::defragment(){
             // Update chunk locations
             occCurrent->startIndex -= freeCurrent->chunkSize;
             occCurrent->startLoc = &memoryPool[occCurrent->startIndex];
-
             occCurrent = occCurrent->next;
         }
-        memmove(freeCurrent->startLoc, occStartLoc, totalSize);
-
+        memmove(freeCurrent->startLoc, occStartLoc, totalMove);
+        prevFreeChunk = freeCurrent;
         freeCurrent = freeCurrent->next;
+        delete prevFreeChunk;
     };
-    
+
     // Update free list
-    //update tail end chunk: should begin at tail chunk start index - (total free chunksize - tail free chunk size)
-    freeTailChunk = freeCurrent->next;
-    freeTailChunk->startIndex -= totalSize - (freeTailChunk->chunkSize);
-    freeTailChunk->startLoc = &memoryPool[freeTailChunk->startIndex];
+    freeCurrent->startIndex -= totalFree;
+    freeCurrent->chunkSize += totalFree;
+    freeCurrent->startLoc = &memoryPool[freeCurrent->startIndex];
     // delete all free chunks and set tail free chunk to freeHead
     
-    freeHead = freeTailChunk;
+    freeHead = freeCurrent;
 };
 
 

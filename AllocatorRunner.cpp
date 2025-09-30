@@ -1,30 +1,19 @@
 #include "Allocator.cpp"
-struct test123 {
-    int* a = nullptr;
-};
+#include <iostream>
 int main()
 {
-    
-    uint8_t num1 = 14;
-    int chunkSize = 4096;
-    MemoryAllocator allocator123 = MemoryAllocator(8192);
-    //int* test = static_cast<int*>(allocator123.malloc(chunkSize));
-    int* test = (int*)allocator123.malloc(500);
-    int* test1 = (int*)allocator123.malloc(500);
-    allocator123.printChunks();
-    //allocator123.free(test);
-    //allocator123.printChunks();
-    return 0;
-
-    // TODO:
-
-
-    // 9/15/25 Notes
-    // Our program defines the chunks outside of the memory pool
-    // what we need to do is define block metadeta which attaches our chunk information to the beginning of a memory address
-    // the total memory required for the block is the size requested + the size of the chunk itself (not chunkSize)
-    // probably have to reimplement everything
-
-    
-
+  Allocator alloc(8192);
+  int** test1 = (int**)alloc.malloc(11);
+  int** test2 = (int**)alloc.malloc(22);
+  int** test3 = (int**)alloc.malloc(33);
+  alloc.free(*test2);
+  alloc.defragment();
+  cout << (alloc.getFreeHead()->startIndex) << endl;
+  cout << alloc.getOccHead()->next->startIndex << endl;  
+  cout << alloc.getOccHead()->next->startLoc << " EEEE " << *test3 << endl;
+  cout << alloc.getOccHead()->startLoc << " EEEEE " << *test1 << endl;
+  // // 44 test1 chunkSize + test3 chunkSize
+  cout << alloc.getFreeHead()->startIndex << endl;
+  cout << alloc.getFreeHead()->startLoc << endl;
+  cout << alloc.getMemAddress(alloc.getFreeHead()->startIndex) << endl;
 };

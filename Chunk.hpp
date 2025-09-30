@@ -8,4 +8,7 @@ struct Chunk {
     
 
     Chunk(int startingIndex, int chunkSize, bool Free) : startIndex(startingIndex), chunkSize(chunkSize), Free(Free), startLoc(nullptr), next(nullptr) {};
+    ~Chunk() {
+        
+    }
 };
