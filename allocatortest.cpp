@@ -88,15 +88,19 @@ TEST(AllocatorDefragment, Defragment1){
   GTEST_ASSERT_TRUE(alloc.getFreeHead()->startLoc == alloc.getMemAddress(alloc.getFreeHead()->startIndex));
 }
 
-
-// TEST(MemoryAllocatorFree, free)
-// {
-//     MemoryAllocator allocator123 = MemoryAllocator(8192);
-//     int* test = (int*)allocator123.malloc(10);
-//     int* test1 = (int*)allocator123.malloc(10);
-//     allocator123.free(test);
-//     GTEST_ASSERT_TRUE(allocator123.getFreeHead()->startIndex == 0);
-// }
+TEST(AllocatorPerformance, Allocate1b){
+  Allocator alloc(1000000000);
+  GTEST_EXPECT_TRUE(alloc.malloc(1000000000) != nullptr);
+}
+TEST(AllocatorPerformance, Allocate100kblocks){
+  Allocator alloc(100000);
+  for(int i = 1; i < 100002; i++){
+    alloc.malloc(1);
+    if(i == 100000){
+      GTEST_EXPECT_TRUE(alloc.malloc(1) == nullptr);
+    }
+  }
+}
 
 int main(int argc, char* argv[])
 {
