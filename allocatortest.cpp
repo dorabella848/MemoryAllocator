@@ -89,6 +89,22 @@ TEST(AllocatorDefragment, Defragment1){
 }
 
 
+// Test Performance
+
+// single 1 billion byte alloc
+TEST(PerformAlloc, largeAllocation1b){
+  Allocator alloc(1000000000);
+  GTEST_EXPECT_TRUE(alloc.malloc(1000000000) != nullptr);
+}
+// 100k blocks
+// TEST(PerformAlloc, manyAlloc100k){
+//   Allocator alloc(100000);
+//   for(int i = 0; i < 100000; i++){
+//     GTEST_ASSERT_TRUE(alloc.malloc(1) != nullptr);
+//   }
+//   GTEST_ASSERT_TRUE(alloc.getFreeHead() == nullptr);
+// }
+
 // TEST(MemoryAllocatorFree, free)
 // {
 //     MemoryAllocator allocator123 = MemoryAllocator(8192);
