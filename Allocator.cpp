@@ -40,15 +40,15 @@ void Allocator::printChunks(){
 
         // absnext , absprev, Next, and Prev are both Chunk* so they are converted to normal so we can compare to Ptr
         // Left-justify and pad with spaces to a width of 10
-        printf("{Ptr: %-10p", currentChunk->startLoc);
-        printf("| FreeState:  %-6s", currentChunk->Free ? "true" : "false");
-        printf("| Size: %-*d", (int)round(log10(memorySize))+1, currentChunk->chunkSize);
-        printf("| startIndex: %-*d", (int)round(log10(memorySize))+1, currentChunk->startIndex);
-        printf("| AbsNext: %-10p", (currentChunk->AbsNext != nullptr) ? currentChunk->AbsNext->startLoc : nullptr);
-        printf("| AbsPrev: %-10p", (currentChunk->AbsPrev != nullptr) ? currentChunk->AbsPrev->startLoc : nullptr);
-        printf("| next: %-10p", (currentChunk->next != nullptr) ? currentChunk->next->startLoc : nullptr);
-        printf("| prev: %-10p", (currentChunk->prev != nullptr) ? currentChunk->prev->startLoc : nullptr);
-        std::cout << "}" << endl;
+        printf("Ptr: %-14p\n", currentChunk->startLoc);
+        printf("{ Free:  %-5s", currentChunk->Free ? "true" : "false");
+        printf("| AbsNext: %-14p", (currentChunk->AbsNext != nullptr) ? currentChunk->AbsNext->startLoc : nullptr);
+        printf("| Size: %-*d", (int)round(log10(memorySize)), currentChunk->chunkSize);
+        printf("| startIndex: %-*d", (int)round(log10(memorySize))-1, currentChunk->startIndex);
+        printf("| AbsPrev: %-14p", (currentChunk->AbsPrev != nullptr) ? currentChunk->AbsPrev->startLoc : nullptr);
+        printf("| next: %-14p", (currentChunk->next != nullptr) ? currentChunk->next->startLoc : nullptr);
+        printf("| prev: %-14p", (currentChunk->prev != nullptr) ? currentChunk->prev->startLoc : nullptr);
+        std::cout << "}\n" << endl;
         currentChunk = currentChunk->AbsNext;
         
 

@@ -2,7 +2,7 @@
 struct Chunk {
     int startIndex;
     void* startLoc;
-    size_t chunkSize;
+    int chunkSize;
     bool Free;
     // Next free/occupied chunk dependent on current free state
     Chunk* next;
