@@ -1,0 +1,14 @@
+# Ignore all .log files
+*.log
+
+# Ignore node_modules folder
+node_modules/
+
+# Ignore all files in temp folder
+out/
+build/
+googletest/
+
+
+# Ignore all .env files
+*.env
