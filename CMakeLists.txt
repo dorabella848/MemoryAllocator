@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.5.1)
-
 set(GOOGLETEST_VERSION 1.15.2)
 project(CodeDynamic)
 

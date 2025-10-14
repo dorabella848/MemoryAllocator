@@ -5,6 +5,8 @@
 #include <cstring>
 #include <vector> 
 #include "Chunk.hpp"
+#include <cstdint>
+
 using namespace std;
 
 class Allocator {

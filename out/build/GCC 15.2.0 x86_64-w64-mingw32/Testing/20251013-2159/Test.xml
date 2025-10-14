@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Site BuildName="(empty)"
+	BuildStamp="20251013-2159-Experimental"
+	Name="(empty)"
+	Generator="ctest-4.1.2"
+	CompilerName=""
+	CompilerVersion=""
+	OSName="Windows"
+	Hostname="DESKTOP-M8UB3OU"
+	OSRelease=" Professional"
+	OSVersion=" (Build 26100)"
+	OSPlatform="AMD64"
+	Is64Bits="1"
+	VendorString="GenuineIntel"
+	VendorID="Intel Corporation"
+	FamilyID="6"
+	ModelID="10"
+	ModelName=""
+	ProcessorCacheSize="-1"
+	NumberOfLogicalCPU="14"
+	NumberOfPhysicalCPU="12"
+	TotalVirtualMemory="34260"
+	TotalPhysicalMemory="32212"
+	LogicalProcessorsPerPhysical="1"
+	ProcessorClockFrequency="1700"
+	>
+	<Testing>
+		<StartDateTime>Oct 14 14:46 Central Daylight Time</StartDateTime>
+		<StartTestTime>1760471177</StartTestTime>
+		<TestList/>
+		<EndDateTime>Oct 14 14:46 Central Daylight Time</EndDateTime>
+		<EndTestTime>1760471177</EndTestTime>
+		<ElapsedMinutes>0</ElapsedMinutes>
+	</Testing>
+</Site>

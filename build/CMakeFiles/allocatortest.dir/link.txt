@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/allocatortest.dir/allocatortest.cpp.o -o allocatortest  lib/libgtest.a 
