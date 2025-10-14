@@ -1,3 +1,0 @@
-"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\allocatortest.dir/objects.a
-C:\mingw64\bin\ar.exe qc CMakeFiles\allocatortest.dir/objects.a @CMakeFiles\allocatortest.dir\objects1.rsp
-C:\mingw64\bin\g++.exe -g -Wl,--whole-archive CMakeFiles\allocatortest.dir/objects.a -Wl,--no-whole-archive -o allocatortest.exe -Wl,--out-implib,liballocatortest.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\allocatortest.dir\linkLibs.rsp

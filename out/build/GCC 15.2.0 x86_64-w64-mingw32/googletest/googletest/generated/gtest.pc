@@ -1,9 +1,0 @@
-libdir=C:/Users/intern/Desktop/MemoryAllocator/out/install/GCC 15.2.0 x86_64-w64-mingw32/lib
-includedir=C:/Users/intern/Desktop/MemoryAllocator/out/install/GCC 15.2.0 x86_64-w64-mingw32/include
-
-Name: gtest
-Description: GoogleTest (without main() function)
-Version: 1.16.0
-URL: https://github.com/google/googletest
-Libs: -L${libdir} -lgtest 
-Cflags: -I${includedir} -DGTEST_HAS_PTHREAD=0

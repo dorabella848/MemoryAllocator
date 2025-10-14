@@ -1,5 +1,0 @@
-if(EXISTS "C:/Users/intern/Desktop/MemoryAllocator/out/build/GCC 15.2.0 x86_64-w64-mingw32/allocatortest[1]_tests.cmake")
-  include("C:/Users/intern/Desktop/MemoryAllocator/out/build/GCC 15.2.0 x86_64-w64-mingw32/allocatortest[1]_tests.cmake")
-else()
-  add_test(allocatortest_NOT_BUILT allocatortest_NOT_BUILT)
-endif()

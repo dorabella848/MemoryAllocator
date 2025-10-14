@@ -1,5 +1,0 @@
-if(EXISTS "/home/intern/MemoryAllocator/build/allocatortest[1]_tests.cmake")
-  include("/home/intern/MemoryAllocator/build/allocatortest[1]_tests.cmake")
-else()
-  add_test(allocatortest_NOT_BUILT allocatortest_NOT_BUILT)
-endif()
