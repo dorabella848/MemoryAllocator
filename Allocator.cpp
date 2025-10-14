@@ -95,6 +95,7 @@ void *Allocator::malloc(size_t size)
         freeCurrent->AbsPrev->next = newChunk;
         freeCurrent->AbsPrev->AbsNext = newChunk;
         newChunk->AbsPrev = freeCurrent->AbsPrev;
+        newChunk->prev = freeCurrent->AbsPrev;
         freeCurrent->AbsPrev = newChunk;
         // set new chunk's absnext to the free chunk you are taking memory from and its next to the freechunk's absnext
         newChunk->AbsNext = freeCurrent;
@@ -202,15 +203,16 @@ void Allocator::free(void* ptr) {
         deleteChunk(newFree);
         return;
     }
-    // found new free from prev code
+
     newFree->Free = true;
-    // in case free head is nullptr
-    if(freeHead == nullptr){
-        freeHead = newFree;
-        newFree->next = nullptr;
-        newFree->prev = nullptr;
-        return;
+    // update occ chunks
+    if(newFree->prev != nullptr){
+        newFree->prev->next = newFree->next;
     }
+    if(newFree->next != nullptr){
+        newFree->next->prev = newFree->prev;
+    }
+
     Chunk* prevFreeChunk = newFree->AbsPrev;
     // In case there is a previous free chunk
     while(prevFreeChunk != nullptr){
@@ -231,10 +233,20 @@ void Allocator::free(void* ptr) {
         }
         prevFreeChunk = prevFreeChunk->AbsPrev;
     }
+
+    // in case free head is nullptr
+    if(freeHead == nullptr){
+        freeHead = newFree;
+        newFree->next = nullptr;
+        newFree->prev = nullptr;
+        return;
+    }
+    
     
     // the free head occurs after the current (confirmed by previous lines (wouldnt have gotten here otherwise))
     newFree->next = freeHead;
     freeHead->prev = newFree;
+    newFree->prev = nullptr;
     freeHead = newFree;
 };
 

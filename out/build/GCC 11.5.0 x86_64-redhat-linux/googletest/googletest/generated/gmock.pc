@@ -1,0 +1,10 @@
+libdir=/home/intern/MemoryAllocator/out/install/GCC 11.5.0 x86_64-redhat-linux/lib
+includedir=/home/intern/MemoryAllocator/out/install/GCC 11.5.0 x86_64-redhat-linux/include
+
+Name: gmock
+Description: GoogleMock (without main() function)
+Version: 1.16.0
+URL: https://github.com/google/googletest
+Requires: gtest = 1.16.0
+Libs: -L${libdir} -lgmock 
+Cflags: -I${includedir} -DGTEST_HAS_PTHREAD=1

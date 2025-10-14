@@ -68,7 +68,7 @@ TEST(AllocatorFree, InformationOverwriteFree){
   alloc.free(*test1);
   int** test2 = (int**)alloc.malloc(22);
   **test2 = 10;
-  GTEST_ASSERT_TRUE(**test1 == 10);
+  GTEST_ASSERT_TRUE(**test2 == 10);
 
 }
 TEST(AllocatorDefragment, Defragment1){
