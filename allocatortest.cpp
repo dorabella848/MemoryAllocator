@@ -72,6 +72,7 @@ TEST(AllocatorFree, InformationOverwriteFree){
 
 }
 TEST(AllocatorDefragment, Defragment1){
+  //double free error-same block deallocated 2+ times 
   Allocator alloc(8192);
   int** test1 = (int**)alloc.malloc(11);
   int** test2 = (int**)alloc.malloc(22);

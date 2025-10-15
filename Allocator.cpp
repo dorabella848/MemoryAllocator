@@ -293,6 +293,10 @@ void Allocator::defragment(){
         memmove(freeCurrent->startLoc, occStartLoc, totalMove);
         prevFreeChunk = freeCurrent;
         freeCurrent = freeCurrent->next;
+        if(prevFreeChunk->AbsPrev != nullptr){
+            prevFreeChunk->AbsPrev->AbsNext = prevFreeChunk->AbsNext;
+        }
+        prevFreeChunk->AbsNext->AbsPrev = prevFreeChunk->AbsPrev;
         delete prevFreeChunk;
     };
 
@@ -300,6 +304,7 @@ void Allocator::defragment(){
     freeCurrent->startIndex -= totalFree;
     freeCurrent->chunkSize += totalFree;
     freeCurrent->startLoc = &memoryPool[freeCurrent->startIndex];
+    freeCurrent->prev = nullptr;
     // delete all free chunks and set tail free chunk to freeHead
     
     freeHead = freeCurrent;
