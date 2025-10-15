@@ -56,7 +56,7 @@ void Allocator::printChunks(){
     cout << "ENDOFMEMORY" << endl;
 };
 
-void *Allocator::malloc(size_t size)
+void** Allocator::malloc(size_t size)
 {
     // Input sanitization
     if(size <= 0){
@@ -309,6 +309,13 @@ void Allocator::defragment(){
     
     freeHead = freeCurrent;
 };
+
+void* Allocator::calloc(size_t number, size_t size){
+    void* arr = *(Allocator::malloc(number*size));
+    memset(arr, 0, number*size);
+    return arr;
+    // Initialize all bytes to 0
+}
 
 
 
