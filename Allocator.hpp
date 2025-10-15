@@ -32,8 +32,8 @@ class Allocator {
         void deleteChunk(Chunk* toRemove);
         void free(void* ptr);
         void defragment();
-        void* calloc(size_t number, size_t size);
-        void* realloc(void* ptr, size_t size);
+        void** calloc(size_t number, size_t size);
+        void** realloc(void* ptr, size_t size);
         
         
         ~Allocator(){

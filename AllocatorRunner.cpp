@@ -2,17 +2,21 @@
 #include <iostream>
 int main()
 {
-  Allocator alloc(8096);
-  //int** test1 = (int**)alloc.malloc(10, sizeof(int));
-  int** test1 = (int**)alloc.calloc(10, sizeof(int*));
-  for (int i = 0; i < 10; ++i) {
-      test1[i] = (int*)alloc.calloc(10, sizeof(int));
-  }
-  test1[2][0] = 56;
+  Allocator alloc(8192);
+  int** test1 = (int**)alloc.malloc(11);
+  int** test2 = (int**)alloc.malloc(33);
+  int** test3 = (int**)alloc.calloc(10, sizeof(int));
 
+  alloc.free(*test2);
+  alloc.defragment();
   alloc.printChunks();
-  for (int i = 0; i < 10; ++i) {
-    std::cout << test1[i][0] << " ";
-  }
+
+  // I finished calloc and added some unit tests for it
+  // the way it works is that it calls malloc and then returns the pointer to the memory block similar
+  // to how malloc's output is utilized, you can assign values to the indexs of an array
+  // created using malloc by dereferencing the pointer a single time like: (*arr)[0] = 5;
+  // this will assign the first index of the array to 5
+  // The reason double pointers are used is the same for malloc in that we want to protect referencing after
+  // defragmentation.
   
 };

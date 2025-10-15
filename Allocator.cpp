@@ -310,9 +310,9 @@ void Allocator::defragment(){
     freeHead = freeCurrent;
 };
 
-void* Allocator::calloc(size_t number, size_t size){
-    void* arr = *(Allocator::malloc(number*size));
-    memset(arr, 0, number*size);
+void** Allocator::calloc(size_t number, size_t size){
+    void** arr = (Allocator::malloc(number*size));
+    memset(*arr, 0, number*size);
     return arr;
     // Initialize all bytes to 0
 }

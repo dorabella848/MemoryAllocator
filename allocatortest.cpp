@@ -51,6 +51,20 @@ TEST(AllocatorFree, SingleBlockFreeTest){
   GTEST_ASSERT_TRUE(alloc.getOccHead() == nullptr);
     
 }
+TEST(AllocatorFree, CallocFreeSingleIndex){
+  Allocator alloc(8192);
+  int** test1 = (int**)alloc.calloc(1, sizeof(int*));
+  alloc.free(*test1);
+  GTEST_ASSERT_TRUE(alloc.getFreeHead()->chunkSize == 8192);
+  GTEST_ASSERT_TRUE(alloc.getOccHead() == nullptr);
+}
+TEST(AllocatorFree, CallocFreeMultipleIndex){
+  Allocator alloc(8192);
+  int** test1 = (int**)alloc.calloc(10, sizeof(int*));
+  alloc.free(*test1);
+  GTEST_ASSERT_TRUE(alloc.getFreeHead()->chunkSize == 8192);
+  GTEST_ASSERT_TRUE(alloc.getOccHead() == nullptr);
+}
 TEST(AllocatorFree, FragmentedFree){
   Allocator alloc(8192);
   int** test1 = (int**)alloc.malloc(11);
@@ -71,7 +85,7 @@ TEST(AllocatorFree, InformationOverwriteFree){
   GTEST_ASSERT_TRUE(**test2 == 10);
 
 }
-TEST(AllocatorDefragment, Defragment1){
+TEST(AllocatorDefragment, Malloc){
   //double free error-same block deallocated 2+ times 
   Allocator alloc(8192);
   int** test1 = (int**)alloc.malloc(11);
@@ -89,6 +103,36 @@ TEST(AllocatorDefragment, Defragment1){
   GTEST_ASSERT_TRUE(alloc.getFreeHead()->startLoc == alloc.getMemAddress(alloc.getFreeHead()->startIndex));
 }
 
+TEST(AllocatorDefragment, Calloc){
+  Allocator alloc(8192);
+  int** test1 = (int**)alloc.malloc(11);
+  int** test2 = (int**)alloc.malloc(33);
+  int** test3 = (int**)alloc.calloc(10, sizeof(int));
+
+  alloc.free(*test2);
+  alloc.defragment();
+
+  GTEST_ASSERT_TRUE(11 == alloc.getOccHead()->next->startIndex);  
+  GTEST_ASSERT_TRUE(alloc.getOccHead()->next->startLoc == *test3);
+  GTEST_ASSERT_TRUE(alloc.getOccHead()->startLoc == *test1);
+  GTEST_ASSERT_TRUE(alloc.getFreeHead()->startIndex == 51);
+  GTEST_ASSERT_TRUE(alloc.getFreeHead()->startLoc == alloc.getMemAddress(alloc.getFreeHead()->startIndex));
+}
+
+TEST(AllocatorCalloc, CallocAllAssigned){
+  Allocator alloc(8096);
+  int** test1 = (int**)alloc.calloc(10, sizeof(int));
+
+  //cout << (*test1)[0];
+  for (int i = 0; i < 10; i++) {
+    (*test1)[i] = i;
+  }
+
+  for (int i = 0; i < 10; i++) {
+    GTEST_ASSERT_TRUE((*test1)[i] == i);
+  }
+}
+
 
 // Test Performance
 
@@ -98,22 +142,13 @@ TEST(PerformAlloc, largeAllocation1b){
   GTEST_EXPECT_TRUE(alloc.malloc(1000000000) != nullptr);
 }
 // 100k blocks
-// TEST(PerformAlloc, manyAlloc100k){
-//   Allocator alloc(100000);
-//   for(int i = 0; i < 100000; i++){
-//     GTEST_ASSERT_TRUE(alloc.malloc(1) != nullptr);
-//   }
-//   GTEST_ASSERT_TRUE(alloc.getFreeHead() == nullptr);
-// }
-
-// TEST(MemoryAllocatorFree, free)
-// {
-//     MemoryAllocator allocator123 = MemoryAllocator(8192);
-//     int* test = (int*)allocator123.malloc(10);
-//     int* test1 = (int*)allocator123.malloc(10);
-//     allocator123.free(test);
-//     GTEST_ASSERT_TRUE(allocator123.getFreeHead()->startIndex == 0);
-// }
+TEST(PerformAlloc, manyAlloc10M){
+  Allocator alloc(10000000);
+  for(int i = 0; i < 10000000; i++){
+    GTEST_ASSERT_TRUE(alloc.malloc(1) != nullptr);
+  }
+  GTEST_ASSERT_TRUE(alloc.getFreeHead() == nullptr);
+}
 
 int main(int argc, char* argv[])
 {
