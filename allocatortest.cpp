@@ -119,7 +119,7 @@ TEST(AllocatorDefragment, Calloc){
   GTEST_ASSERT_TRUE(alloc.getFreeHead()->startLoc == alloc.getMemAddress(alloc.getFreeHead()->startIndex));
 }
 
-TEST(AllocatorCalloc, CallocAllAssigned){
+TEST(AllocatorCalloc, AllAssigned){
   Allocator alloc(8096);
   int** test1 = (int**)alloc.calloc(10, sizeof(int));
 
@@ -149,9 +149,45 @@ TEST(PerformAlloc, manyAlloc10M){
   }
   GTEST_ASSERT_TRUE(alloc.getFreeHead() == nullptr);
 }
+TEST(AllocatorRealloc, NullInput){
+  Allocator alloc(8096);
+  int* chunk = (int*)alloc.realloc(nullptr, 203);
+  int **test = &chunk;
+  GTEST_ASSERT_TRUE(*test == nullptr);
+}
+
+TEST(AllocatorRealloc, reallocToZero){
+  Allocator alloc(8096);
+  int* chunk = (int*)alloc.realloc(alloc.getOccHead(), 0);
+  int **test2 = &chunk;
+  GTEST_ASSERT_TRUE(*test2 == nullptr);
+}
+
+TEST(AllocatorRealloc, GreaterThanAvailable){
+  Allocator alloc(8096);
+  int** test1 = (int**)alloc.malloc(11);
+  int** test2 = (int**)alloc.malloc(33);
+  int** test3 = (int**)alloc.malloc(55);
+  test2 = (int**)alloc.realloc(*test2, 45);
+  GTEST_ASSERT_TRUE(*test2 == alloc.getOccHead()->next->next->startLoc);
+  // add more asserts
+}
+
+TEST(AllocatorRealloc, ReUseSamePos){
+  Allocator alloc(8096);
+  int** test1 = (int**)alloc.malloc(11);
+  int** test2 = (int**)alloc.malloc(33);
+  int** test3 = (int**)alloc.malloc(35);
+  int** test4 = (int**)alloc.malloc(55);
+
+  alloc.free(*test3);
+  test2 = (int**)alloc.realloc(*test2, 58);
+  GTEST_ASSERT_TRUE((alloc.getOccHead()->next->startLoc) == *test2);
+}
 
 int main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
+

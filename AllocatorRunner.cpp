@@ -2,21 +2,21 @@
 #include <iostream>
 int main()
 {
-  Allocator alloc(8192);
+  Allocator alloc(8096);
   int** test1 = (int**)alloc.malloc(11);
   int** test2 = (int**)alloc.malloc(33);
-  int** test3 = (int**)alloc.calloc(10, sizeof(int));
+  int** test3 = (int**)alloc.malloc(35);
+  int** test4 = (int**)alloc.malloc(55);
 
-  alloc.free(*test2);
-  alloc.defragment();
+  alloc.free(*test3);
+  alloc.printChunks();
+  //alloc.free(*test2);
+  //int** test5 = (int**)alloc.malloc(58);
+  test2 = (int**)alloc.realloc(*test2, 58);
   alloc.printChunks();
 
-  // I finished calloc and added some unit tests for it
-  // the way it works is that it calls malloc and then returns the pointer to the memory block similar
-  // to how malloc's output is utilized, you can assign values to the indexs of an array
-  // created using malloc by dereferencing the pointer a single time like: (*arr)[0] = 5;
-  // this will assign the first index of the array to 5
-  // The reason double pointers are used is the same for malloc in that we want to protect referencing after
-  // defragmentation.
+  // The error was caused by deleteChunk() in free() because it was setting 
+  // occHead to nullptr if the deleted chunk wasnt the occHead
   
+
 };
