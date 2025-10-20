@@ -8,8 +8,7 @@ node_modules/
 out/
 build/
 googletest/
-AllocatorRunner
-allocatortest
+
 
 # Ignore all .env files
 *.env
