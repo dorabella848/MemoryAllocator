@@ -2,9 +2,12 @@
 #include "Allocator.cpp"
 #include <random>
 
-// valgrind --leak-check=full --track-origins=yes ./allocatortest 
+// g++ AllocatorRunner.cpp -o AllocatorRunner.exe
+// g++ allocatortest.cpp -o allocatortest.exe -lgtest -lgtest_main -pthread
+// valgrind --leak-check=full --track-origins=yes ./allocatortest.exe
 // --gtest_filter={TestSuite}.{TestName}
-// -lgtest -lgtest_main -pthread
+// make
+// ctest
 
 // Test allocating almost all available memory (e.g., 9 out of 10)
 TEST(AllocatorMalloc, MallocValidSize_AlmostFull) {
