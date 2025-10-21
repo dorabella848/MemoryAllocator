@@ -186,6 +186,27 @@ TEST(AllocatorRealloc, ReUseSamePos){
   GTEST_ASSERT_TRUE((alloc.getOccHead()->next->startLoc) == *test2);
 }
 
+TEST(AllocatorRealloc, InformationPreserved){
+  Allocator alloc(8096);
+  int** test1 = (int**)alloc.malloc(11);
+  **test1 = 15;
+  int** test2 = (int**)alloc.realloc(*test1, 43);
+  GTEST_ASSERT_TRUE(**test2 == 15);
+}
+
+TEST(AllocatorRealloc, CallocRealloc){
+  Allocator alloc(8096);
+  int** test1 = (int**)alloc.calloc(5, 11);
+  for(int i =0; i < 5; i++){
+    (*test1)[i] = i*5;
+  }
+  int** test2 = (int**)alloc.realloc(*test1, 43);
+  for(int i =0; i < 5; i++){
+    GTEST_ASSERT_TRUE((*test2)[i] == i*5);
+  }
+
+}
+
 int main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest(&argc, argv);

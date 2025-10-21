@@ -3,20 +3,16 @@
 int main()
 {
   Allocator alloc(8096);
-  int** test1 = (int**)alloc.malloc(11);
-  int** test2 = (int**)alloc.malloc(33);
-  int** test3 = (int**)alloc.malloc(35);
-  int** test4 = (int**)alloc.malloc(55);
-
-  alloc.free(*test3);
+  int** test1 = (int**)alloc.calloc(5, 11);
   alloc.printChunks();
-  //alloc.free(*test2);
-  //int** test5 = (int**)alloc.malloc(58);
-  test2 = (int**)alloc.realloc(*test2, 58);
+  for(int i = 0; i < 5; i++){
+    (*test1)[i] = i*5;
+  }
+  int** test2 = (int**)alloc.realloc(*test1, 80);
+  for(int i = 0; i < 5; i++){
+    cout << (*test2)[i] << " ";
+  }
   alloc.printChunks();
 
-  // The error was caused by deleteChunk() in free() because it was setting 
-  // occHead to nullptr if the deleted chunk wasnt the occHead
-  
 
 };

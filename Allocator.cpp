@@ -323,21 +323,23 @@ void** Allocator::realloc(void* ptr, size_t size){
     }
     if (target->chunkSize >= size){
         target->chunkSize = size;
+        // This should create a new free block after target which has the chunk size of (target->chunksize-size)
         return &(target->startLoc);
     }
-    if (target->chunkSize < size){
-        uint8_t savedData[target->chunkSize];
-        memcpy(savedData, ptr, target->chunkSize);
+    else {
+        // Added min function since we dont want to copy more than necessary since it is a waste of time.
+        // We may want to change chunkSize to size_t so we dont have to convert to int64_t here
+        int dataSize = min((int64_t)target->chunkSize, (int64_t)size);
+        uint8_t savedData[dataSize];
+        memcpy(savedData, ptr, dataSize);
         Allocator::free(target->startLoc);
         void** newBlock = malloc(size);
-        if (newBlock == nullptr){
+        if (*newBlock == nullptr){
             return nullptr;
         }
-        memcpy(*newBlock, &savedData, sizeof(savedData));
-        free(savedData);
+        memcpy(*newBlock, savedData, dataSize);
         return newBlock;    
     }
-    return nullptr;
 }
 
 
