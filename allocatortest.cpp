@@ -4,6 +4,7 @@
 
 // valgrind --leak-check=full --track-origins=yes ./allocatortest 
 // --gtest_filter={TestSuite}.{TestName}
+// -lgtest -lgtest_main -pthread
 
 // Test allocating almost all available memory (e.g., 9 out of 10)
 TEST(AllocatorMalloc, MallocValidSize_AlmostFull) {

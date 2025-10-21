@@ -29,7 +29,6 @@ class Allocator {
         void* getMemAddress(size_t index);
         void printChunks();
         void** malloc(size_t size);
-        void deleteChunk(Chunk* toRemove);
         void free(void* ptr);
         void defragment();
         void** calloc(size_t number, size_t size);
