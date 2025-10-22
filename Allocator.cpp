@@ -339,6 +339,27 @@ void** Allocator::realloc(void* ptr, size_t size){
         // new free block size is target's chunkSize - size
         Chunk* newFreeChunk = new Chunk(target->startIndex + target->chunkSize, target->chunkSize-size, true);
         newFreeChunk->startLoc = &memoryPool[newFreeChunk->startIndex];
+        newFreeChunk->AbsPrev = target;
+        newFreeChunk->AbsNext = target->AbsNext;
+        if(target->AbsNext != nullptr){
+            target->AbsNext->AbsPrev = newFreeChunk;
+        }
+        if(target->AbsPrev != nullptr){
+            target->AbsPrev->AbsNext = newFreeChunk;
+        }
+        target->AbsNext = newFreeChunk;
+        
+        if(freeHead == nullptr){
+            freeHead = newFreeChunk;
+            return &(target->startLoc);
+        }
+        if(freeHead->startIndex > newFreeChunk->startIndex){
+            newFreeChunk->prev = nullptr;
+            newFreeChunk->next = freeHead;
+            freeHead->prev = newFreeChunk;
+            freeHead = newFreeChunk;
+            return &(target->startLoc);
+        }
         // Find closest previous free chunk
         Chunk* prevFreeChunk = freeHead;
         while(prevFreeChunk->next != nullptr && prevFreeChunk->next->startIndex > target->startIndex){
