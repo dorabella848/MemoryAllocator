@@ -76,7 +76,7 @@ void** Allocator::malloc(size_t size)
         return nullptr;
     }
     // create new memory chunk 
-    Chunk* newChunk = new Chunk(freeHead->startIndex, size, false);
+    Chunk* newChunk = new Chunk(freeCurrent->startIndex, size, false);
     newChunk->startLoc = &memoryPool[newChunk->startIndex];
     // Update the free-chunk-you-are-taking-memory-from's size, startloc, and startindex
     freeCurrent->startIndex += newChunk->chunkSize;
@@ -332,12 +332,17 @@ void** Allocator::realloc(void* ptr, size_t size){
         return nullptr;
     }
     if (target->chunkSize >= size){
-        target->chunkSize = size;
+        // there may be a free block after the block to be reallocated
+        if(target->AbsNext != nullptr && target->AbsNext->Free){
+            target->AbsNext->chunkSize += target->chunkSize-size;
+            target->AbsNext->startIndex -= target->chunkSize-size;
+            target->AbsNext->startLoc = &memoryPool[target->AbsNext->startIndex];
+            return &(target->startLoc);
+        }
+
         // This should create a new free block after target which has the chunk size of (target->chunksize-size)
-        // target's absnext should be a new free chunk
-        // traverse free list to find the closest free block before target (use reasoning in free())
-        // new free block size is target's chunkSize - size
         Chunk* newFreeChunk = new Chunk(target->startIndex + target->chunkSize, target->chunkSize-size, true);
+        target->chunkSize = size;
         newFreeChunk->startLoc = &memoryPool[newFreeChunk->startIndex];
         newFreeChunk->AbsPrev = target;
         newFreeChunk->AbsNext = target->AbsNext;
@@ -348,7 +353,7 @@ void** Allocator::realloc(void* ptr, size_t size){
             target->AbsPrev->AbsNext = newFreeChunk;
         }
         target->AbsNext = newFreeChunk;
-        
+
         if(freeHead == nullptr){
             freeHead = newFreeChunk;
             return &(target->startLoc);
