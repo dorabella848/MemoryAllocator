@@ -106,13 +106,23 @@ void** Allocator::malloc(size_t size)
     }
     // Check if free current should be deleted
     if (freeCurrent->chunkSize == 0){
-        if (freeCurrent == freeHead){
-            newChunk->AbsNext = nullptr;
+        newChunk->AbsNext = freeCurrent->AbsNext;
+        if(freeCurrent->AbsNext != nullptr){
+            freeCurrent->AbsNext->AbsPrev = newChunk;
+        }
+        if(freeCurrent->prev != nullptr){
+            freeCurrent->prev->next = freeCurrent->next;
+        }
+        if(freeCurrent == freeHead){
             freeHead = freeCurrent->next;
-        } else {
-            // if freeCurrent is not freeHead
-            freeCurrent->prev->AbsNext = freeCurrent->AbsNext;
-            freeCurrent->next->prev = freeCurrent->prev;
+            if(freeCurrent->next != nullptr){
+                freeCurrent->next->prev = nullptr;
+            }
+        }
+        else {
+            if(freeCurrent->next != nullptr){
+                freeCurrent->next->prev = freeCurrent->prev;
+            }
         }
         delete freeCurrent;
     }
@@ -324,6 +334,9 @@ void** Allocator::realloc(void* ptr, size_t size){
     if (target->chunkSize >= size){
         target->chunkSize = size;
         // This should create a new free block after target which has the chunk size of (target->chunksize-size)
+        // target's absnext should be a new free chunk
+        // traverse free list to find the closest free block before target (use reasoning in free())
+        // new free block size is target's chunkSize - size
         Chunk* newFreeChunk = new Chunk(target->startIndex + target->chunkSize, target->chunkSize-size, true);
         newFreeChunk->startLoc = &memoryPool[newFreeChunk->startIndex];
         // Find closest previous free chunk
