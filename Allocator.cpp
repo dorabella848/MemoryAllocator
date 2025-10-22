@@ -102,7 +102,7 @@ void** Allocator::malloc(size_t size)
         freeCurrent->AbsPrev = newChunk;
         // set new chunk's absnext to the free chunk you are taking memory from and its next to the freechunk's absnext
         newChunk->AbsNext = freeCurrent;
-        newChunk->next = freeCurrent->AbsNext; // (might be a nullptr but not point in confirming before assign)
+        newChunk->next = freeCurrent->AbsNext; // (might be a nullptr but no point in confirming before assign)
     }
     // Check if free current should be deleted
     if (freeCurrent->chunkSize == 0){
@@ -221,8 +221,8 @@ void Allocator::free(void* ptr){
 
     // Find closest previous free chunk
     Chunk* prevFreeChunk = freeHead;
-    while(prevFreeChunk->next != nullptr || prevFreeChunk->next->startIndex > newFree->startIndex){
-        prevFreeChunk = prevFreeChunk->AbsPrev;
+    while(prevFreeChunk->next != nullptr && prevFreeChunk->next->startIndex > newFree->startIndex){
+        prevFreeChunk = prevFreeChunk->next;
     }
 
     newFree->next = prevFreeChunk->next;
@@ -324,6 +324,21 @@ void** Allocator::realloc(void* ptr, size_t size){
     if (target->chunkSize >= size){
         target->chunkSize = size;
         // This should create a new free block after target which has the chunk size of (target->chunksize-size)
+        Chunk* newFreeChunk = new Chunk(target->startIndex + target->chunkSize, target->chunkSize-size, true);
+        newFreeChunk->startLoc = &memoryPool[newFreeChunk->startIndex];
+        // Find closest previous free chunk
+        Chunk* prevFreeChunk = freeHead;
+        while(prevFreeChunk->next != nullptr && prevFreeChunk->next->startIndex > target->startIndex){
+            prevFreeChunk = prevFreeChunk->next;
+        }
+
+        newFreeChunk->next = prevFreeChunk->next;
+        newFreeChunk->prev = prevFreeChunk->prev;
+        if(prevFreeChunk->next != nullptr){
+            prevFreeChunk->next->prev = newFreeChunk;
+        }
+        prevFreeChunk->next = newFreeChunk;
+
         return &(target->startLoc);
     }
     else {
