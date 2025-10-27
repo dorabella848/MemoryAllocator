@@ -39,7 +39,6 @@ void Allocator::printChunks(){
     while(currentChunk != nullptr){
 
         // absnext , absprev, Next, and Prev are both Chunk* so they are converted to normal so we can compare to Ptr
-        // Left-justify and pad with spaces to a width of 10
         printf("Ptr: %-14p\n", currentChunk->startLoc);
         printf("{ Free:  %-5s", currentChunk->Free ? "true" : "false");
         printf("| AbsNext: %-14p", (currentChunk->AbsNext != nullptr) ? currentChunk->AbsNext->startLoc : nullptr);
@@ -58,11 +57,26 @@ void Allocator::printChunks(){
 
 void** Allocator::malloc(size_t size)
 {
-    // Input sanitization
+    // Search through the free list and determine if there is a large enough free block to house the new occupied chunk
+    // if there is enough free storage in the memory pool but no properly sized free block call defragment() (to be implemented)
+    // if not
+    // return nullptr
+    // otherwise
+    // Create a new occupied chunk with a chunksize of Size
+    // and update freeCurrent's variable to simulate the creation of the occupied chunk
+    // if there is no occHead then newChunk is the new occHead 
+    // otherwise
+    // Update the chunk pointers of the chunks adjacent to freeCurrent to insert newChunk into the occupied list
+    // Update freeCurrent's absprev to point to newChunk
+    // Update newChunk's pointers
+    // check if freeCurrent has no more available space, if so, remove it from the free list (check if it is the freeHead)
+    // return the address of the newChunk's start location (points to start of its position in the memoryPool)
+    // we return the adress of the startlocation because defragment() could potentially deassociate previously created
+    // pointers
+
     if(size <= 0){
         return nullptr;
     }
-    // Go to first free chunk (that is able to hold size)
     Chunk* freeCurrent = freeHead;
     
     while(freeCurrent != nullptr){
@@ -72,17 +86,15 @@ void** Allocator::malloc(size_t size)
         freeCurrent = freeCurrent->next;
     }
     if(freeCurrent == nullptr){
-        // have some way to know total free mem and then auto perform defragment
         return nullptr;
     }
-    // create new memory chunk 
+
     Chunk* newChunk = new Chunk(freeCurrent->startIndex, size, false);
     newChunk->startLoc = &memoryPool[newChunk->startIndex];
-    // Update the free-chunk-you-are-taking-memory-from's size, startloc, and startindex
     freeCurrent->startIndex += newChunk->chunkSize;
     freeCurrent->startLoc = &memoryPool[freeCurrent->startIndex];
     freeCurrent->chunkSize -= newChunk->chunkSize;
-    // if occHead is empty put new occ chunk at occ head and set occ absnext to the free block it was created from vice versa
+    
     if(occHead == nullptr){
         occHead = newChunk;
         newChunk->AbsNext = freeCurrent;
@@ -90,21 +102,19 @@ void** Allocator::malloc(size_t size)
         freeCurrent->AbsPrev = newChunk;
     }
     else{
-        // set the free-chunk-you-are-recieving-memory-from's previous chunk's next to the new occ chunk 
-        // (both abs and normal since we are assuming no two free memory blocks are right next to eachother)
         if(freeCurrent->AbsPrev->next != nullptr){
             freeCurrent->AbsPrev->next->prev = newChunk;
         }
+        // Insert newChunk into the occupied list by using freeCurrent as the reference
         freeCurrent->AbsPrev->next = newChunk;
         freeCurrent->AbsPrev->AbsNext = newChunk;
         newChunk->AbsPrev = freeCurrent->AbsPrev;
         newChunk->prev = freeCurrent->AbsPrev;
         freeCurrent->AbsPrev = newChunk;
-        // set new chunk's absnext to the free chunk you are taking memory from and its next to the freechunk's absnext
         newChunk->AbsNext = freeCurrent;
-        newChunk->next = freeCurrent->AbsNext; // (might be a nullptr but no point in confirming before assign)
+        newChunk->next = freeCurrent->AbsNext;
     }
-    // Check if free current should be deleted
+
     if (freeCurrent->chunkSize == 0){
         newChunk->AbsNext = freeCurrent->AbsNext;
         if(freeCurrent->AbsNext != nullptr){
@@ -132,19 +142,21 @@ void** Allocator::malloc(size_t size)
 }
 
 void Allocator::free(void* ptr){
-    // Remove the connections to the block being freed by updating its prev's next and its next's prev
-    // set the chunk to free
-    // if there is a free chunk next to it then use that to update the freed chunk's next and prev vars
+    // Search through occupied memory list  and see if ptr exists
+    // Remove the chunk associated with ptr from the occupied list (account for if it is the occHead)
+    // Check the freestaet of adjacent chunks and merge them to the left-most free chunk
+    // return if an adjacent free chunk is found
     // otherwise
-    // check if the freeHead is a nullptr, if it is then the new chunk is the free head and its next and prev should
-    // be nullptrs
+    // if the freeHead has a larger start index than newFree then we know that newFree is the new freeHead
+    // and we can just reference our pointer updates off of the old freeHead
     // otherwise
-    // use a loop through the free list to find the closest free chunk before the new free's location
-    // if the first free block is after newFree then newFree is new freeHead and newFree's prev is nullptr
-    // (this block will be newFree's next if that is the case)
-    // once the closest behind free block is found (excluded if first was after newFree)
-    // then updated next and prev values (next is going to be prevFree's next)
+    // we need to search through the free list until either the next free chunk is a nullptr
+    // or it has a larger start index than newChunk
+    // We can then use this found free chunk to update next and prev
     Chunk* newFree = occHead;
+    // keep track of previous occupied chunk so there is no need to maintain a prev variable
+    //Chunk* prevOccChunk = nullptr;
+
     while(newFree != nullptr){
         if(newFree->startLoc == ptr){
             break;
@@ -163,7 +175,6 @@ void Allocator::free(void* ptr){
         }
     }
 
-    // Update the previous and next occupied chunks' pointers
     if(newFree->prev != nullptr){
         newFree->prev->next = newFree->next;
     }
@@ -171,12 +182,12 @@ void Allocator::free(void* ptr){
         newFree->next->prev = newFree->prev;
     }
     newFree->Free = true;
-
-    // Check for adjacent free chunks
+    // check if adjacent chunks are free and merge if they are
     if( (newFree->AbsNext != nullptr && newFree->AbsNext->Free) || (newFree->AbsPrev != nullptr && newFree->AbsPrev->Free) ){
+        // Check in front
         if(newFree->AbsNext != nullptr && newFree->AbsNext->Free){
-            Chunk* nextFree = newFree->AbsNext; // newFree->absnext is going to be deleted since no two free chunks
-            newFree->prev = nextFree->prev;     // are to be adjacent
+            Chunk* nextFree = newFree->AbsNext;
+            newFree->prev = nextFree->prev;
             newFree->next = nextFree->next;
             if(nextFree->prev != nullptr){
                 nextFree->prev->next = newFree;
@@ -185,7 +196,6 @@ void Allocator::free(void* ptr){
                 nextFree->next->prev = newFree;
             }
 
-            // Update adjacent chunk abs pointers
             if(nextFree->AbsNext != nullptr){
                 nextFree->AbsNext->AbsPrev = newFree;
             }
@@ -197,8 +207,9 @@ void Allocator::free(void* ptr){
             delete nextFree;
 
         }
+        // Check behind
         if(newFree->AbsPrev != nullptr && newFree->AbsPrev->Free){
-            Chunk* prevFree = newFree->AbsPrev; // newFree->absnext is going to be deleted since no two free chunks
+            Chunk* prevFree = newFree->AbsPrev;
             newFree->AbsPrev->AbsNext = newFree->AbsNext; 
             if(newFree->AbsNext != nullptr){
                 newFree->AbsNext->AbsPrev = newFree->AbsPrev;
@@ -209,14 +220,7 @@ void Allocator::free(void* ptr){
         }
         return;
     }
-    // if the freeHead is after newFree then newFree is the new freeHead (update pointers appropiately)
-    // otherwise
-    // go until 
-    // prevFreeChunk's next is a nullptr
-    // or
-    // prevFreeChunk-next's startIndex is after newFree
-    // if the next is a nullptr, then newFree is the last free block (prev is prevFreeCHunk, next is nullptr)
-    // otherwise newFree is between 2 free blocks 
+
     if(freeHead == nullptr){
         freeHead = newFree;
         return;
@@ -229,7 +233,6 @@ void Allocator::free(void* ptr){
         return;
     }
 
-    // Find closest previous free chunk
     Chunk* prevFreeChunk = freeHead;
     while(prevFreeChunk->next != nullptr && prevFreeChunk->next->startIndex > newFree->startIndex){
         prevFreeChunk = prevFreeChunk->next;
@@ -244,45 +247,38 @@ void Allocator::free(void* ptr){
 }
 
 void Allocator::defragment(){
-    // Move memory around to make one free block
+    // (this does not work)
 
-    // Make the last free block the tail end of the big free block
-    // Move memory blocks from left to right to the front of the free block tail
+    // Go through every freeChunk that is not the last free chunk
+    // and shift all the occupied chunk to the left (add the free chunk's size to the next free chunk)
+    // repeat until all free chunks are moved to the end
     Chunk* occCurrent = occHead;
     Chunk* freeCurrent = freeHead;
     Chunk* prevFreeChunk = nullptr;
-    // to remove a free chunk move all subsequent chunks up to the next free chunk
-    // Get starting location of the first chunk
-    // iterate through list and count chunk sizes
-    // use memmove to move the memory to the start loc of the free chunk by chunk total size from the location
-    // of the next chunk
-    // Update the affected chunks memory location and memory pool index
-    // repeat for each memory block
-    // if the current free block is the last in the free list then stop
     int totalMove = 0;
     int totalFree = 0;
     while(freeCurrent->next != nullptr){
         
         void* occStartLoc = nullptr;
-        totalMove = 0;
+        // totalFree must be tracked because we delete free chunks as we pass over them
         totalFree += freeCurrent->chunkSize;
 
-        // Catch occCurrent up to current freeCurrent index
         while(occCurrent->startIndex < freeCurrent->startIndex){
             occCurrent = occCurrent->next;
         }
 
         while(occCurrent != nullptr && occCurrent->startIndex < freeCurrent->next->startIndex){
+            // Get the total number of occupied chunks in between two free chunks
+            // to figure out how many bytes to move over into the to be moved free chunk
             totalMove += occCurrent->chunkSize;
-            // Gets first occupied chunk start location
             if(occStartLoc == nullptr){
                 occStartLoc = occCurrent->startLoc;
             }
-            // Update chunk locations
             occCurrent->startIndex -= freeCurrent->chunkSize;
             occCurrent->startLoc = &memoryPool[occCurrent->startIndex];
             occCurrent = occCurrent->next;
         }
+        // Move the occupied bytes over by the total number of free bytes we have moved to the end
         memmove(freeCurrent->startLoc, occStartLoc, totalMove);
         prevFreeChunk = freeCurrent;
         freeCurrent = freeCurrent->next;
@@ -293,28 +289,27 @@ void Allocator::defragment(){
         delete prevFreeChunk;
     };
 
-    // Update free list
+    // Update the final free chunk which is at the end of the memory pool (it's also the freeHead)
+    
     freeCurrent->startIndex -= totalFree;
     freeCurrent->chunkSize += totalFree;
     freeCurrent->startLoc = &memoryPool[freeCurrent->startIndex];
     freeCurrent->prev = nullptr;
-    // delete all free chunks and set tail free chunk to freeHead
-    
     freeHead = freeCurrent;
+    
+    if(totalFree == 0){
+        cout << "WARNING: Defragment was called but no free chunk positions were shifted" << endl;
+    }
+    
 };
 
 void** Allocator::calloc(size_t number, size_t size){
     void** arr = (Allocator::malloc(number*size));
     memset(*arr, 0, number*size);
     return arr;
-    // Initialize all bytes to 0
 }
 
 void** Allocator::realloc(void* ptr, size_t size){
-    //see if block can expand or shrink
-    //find new contiguous memory block
-    //copy contents over to new block, deallocate old memory
-    //if works, return void ptr if not return null ptr
     Chunk* target = occHead;
     if (size == 0){
         return nullptr;
@@ -332,18 +327,19 @@ void** Allocator::realloc(void* ptr, size_t size){
         return nullptr;
     }
     if (target->chunkSize >= size){
-        // there may be a free block after the block to be reallocated
+        // if there is a free chunk to the right of target there is no need to create a new free chunk
         if(target->AbsNext != nullptr && target->AbsNext->Free){
             target->AbsNext->chunkSize += target->chunkSize-size;
             target->AbsNext->startIndex -= target->chunkSize-size;
             target->AbsNext->startLoc = &memoryPool[target->AbsNext->startIndex];
+            target->chunkSize = size;
             return &(target->startLoc);
         }
 
-        // This should create a new free block after target which has the chunk size of (target->chunksize-size)
         Chunk* newFreeChunk = new Chunk(target->startIndex + target->chunkSize, target->chunkSize-size, true);
         target->chunkSize = size;
         newFreeChunk->startLoc = &memoryPool[newFreeChunk->startIndex];
+        // insert newFreeChunk into the abs list
         newFreeChunk->AbsPrev = target;
         newFreeChunk->AbsNext = target->AbsNext;
         if(target->AbsNext != nullptr){
@@ -353,7 +349,7 @@ void** Allocator::realloc(void* ptr, size_t size){
             target->AbsPrev->AbsNext = newFreeChunk;
         }
         target->AbsNext = newFreeChunk;
-
+        // no need to update next and prev if there is no other free chunks
         if(freeHead == nullptr){
             freeHead = newFreeChunk;
             return &(target->startLoc);
@@ -365,8 +361,8 @@ void** Allocator::realloc(void* ptr, size_t size){
             freeHead = newFreeChunk;
             return &(target->startLoc);
         }
-        // Find closest previous free chunk
         Chunk* prevFreeChunk = freeHead;
+        // Logic used from free() to find the closest free chunk
         while(prevFreeChunk->next != nullptr && prevFreeChunk->next->startIndex > target->startIndex){
             prevFreeChunk = prevFreeChunk->next;
         }
