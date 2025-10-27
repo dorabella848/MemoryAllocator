@@ -2,12 +2,14 @@
 #include <iostream>
 int main()
 {
-  Allocator alloc(8096);
-  int** test1 = (int**)alloc.calloc(5, 11);
-  for(int i =0; i < 5; i++){
-    (*test1)[i] = i*5;
-  }
-  int** test2 = (int**)alloc.realloc(*test1, 43);
+  Allocator alloc(8192);
+  int** test1 = (int**)alloc.malloc(5);
+  int** test2 = (int**)alloc.malloc(11);
+  int** test3 = (int**)alloc.malloc(16);
+  int** test4 = (int**)alloc.malloc(27);
+  int** test5 = (int**)alloc.malloc(43);
+  alloc.free(*test2);
+  alloc.free(*test4);
   alloc.printChunks();
-
+  // Keep track of all free chunks and implement defragment to automatically be called
 };
