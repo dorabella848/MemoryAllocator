@@ -1,3 +1,4 @@
+
 {
     "files.associations": {
         "iostream": "cpp",
@@ -65,6 +66,5 @@
         "thread": "cpp",
         "typeinfo": "cpp",
         "variant": "cpp"
-    },
-    "cmake.sourceDirectory": "/wsl.localhost/Ubuntu/home/intern/MemoryAllocator"
+    }
 }

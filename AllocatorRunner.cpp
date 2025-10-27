@@ -2,18 +2,17 @@
 #include <iostream>
 int main()
 {
-  Allocator alloc(8192);
+  Allocator alloc(8096);
   int** test1 = (int**)alloc.malloc(11);
-  int** test2 = (int**)alloc.malloc(22);
-  int** test3 = (int**)alloc.malloc(33);
+  int** test2 = (int**)alloc.malloc(33);
+  int** test3 = (int**)alloc.malloc(55);
   alloc.free(*test2);
-  alloc.defragment();
-  cout << (alloc.getFreeHead()->startIndex) << endl;
-  cout << alloc.getOccHead()->next->startIndex << endl;  
-  cout << alloc.getOccHead()->next->startLoc << " EEEE " << *test3 << endl;
-  cout << alloc.getOccHead()->startLoc << " EEEEE " << *test1 << endl;
-  // // 44 test1 chunkSize + test3 chunkSize
-  cout << alloc.getFreeHead()->startIndex << endl;
-  cout << alloc.getFreeHead()->startLoc << endl;
-  cout << alloc.getMemAddress(alloc.getFreeHead()->startIndex) << endl;
+  int** test4 = (int**)alloc.malloc(45);
+  //test2 = (int**)alloc.realloc(*test2, 45);
+  alloc.printChunks();
+
+  // Maybe we could get rid of the prev variable in the chunks and in the functions
+  // since its not used for anything and is just bloating overhead and reducing readability.
+
+
 };
