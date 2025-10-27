@@ -234,12 +234,12 @@ void Allocator::free(void* ptr){
     }
 
     Chunk* prevFreeChunk = freeHead;
-    while(prevFreeChunk->next != nullptr && prevFreeChunk->next->startIndex > newFree->startIndex){
+    while(prevFreeChunk->next != nullptr && prevFreeChunk->next->startIndex < newFree->startIndex){
         prevFreeChunk = prevFreeChunk->next;
     }
 
     newFree->next = prevFreeChunk->next;
-    newFree->prev = prevFreeChunk->prev;
+    newFree->prev = prevFreeChunk;
     if(prevFreeChunk->next != nullptr){
         prevFreeChunk->next->prev = newFree;
     }
@@ -363,7 +363,7 @@ void** Allocator::realloc(void* ptr, size_t size){
         }
         Chunk* prevFreeChunk = freeHead;
         // Logic used from free() to find the closest free chunk
-        while(prevFreeChunk->next != nullptr && prevFreeChunk->next->startIndex > target->startIndex){
+        while(prevFreeChunk->next != nullptr && prevFreeChunk->next->startIndex < target->startIndex){
             prevFreeChunk = prevFreeChunk->next;
         }
 
