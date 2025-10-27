@@ -153,6 +153,60 @@ TEST(AllocatorFree, InformationOverwriteFree){
   GTEST_ASSERT_EQ(**test2, 10);
   TestConnections(alloc);
 }
+
+TEST(AllocatorFree, FreeChunkAhead){
+  Allocator alloc(8192);
+  int** test1 = (int**)alloc.malloc(11);
+  int** test2 = (int**)alloc.malloc(22);
+  int** test3 = (int**)alloc.malloc(32);
+  int** test4 = (int**)alloc.malloc(42);
+  alloc.free(*test3);
+  alloc.free(*test2);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->startIndex, 11);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->chunkSize, 54);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->startLoc, *test2);
+  TestConnections(alloc);
+}
+
+TEST(AllocatorFree, FreeChunkBehind){
+  Allocator alloc(8192);
+  int** test1 = (int**)alloc.malloc(11);
+  int** test2 = (int**)alloc.malloc(22);
+  int** test3 = (int**)alloc.malloc(32);
+  int** test4 = (int**)alloc.malloc(42);
+  alloc.free(*test2);
+  alloc.free(*test3);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->startIndex, 11);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->chunkSize, 54);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->startLoc, *test2);
+  TestConnections(alloc);
+}
+
+TEST(AllocatorFree, NoFreeHead){
+  Allocator alloc(8192);
+  int** test1 = (int**)alloc.malloc(8192);
+  alloc.free(*test1);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->startIndex, 0);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->chunkSize, 8192);
+  GTEST_ASSERT_EQ(alloc.getOccHead(), nullptr);
+  TestConnections(alloc);
+}
+
+TEST(AllocatorFree, AfterFreeHead_No_Adj_Free){
+  Allocator alloc(8192);
+  int** test1 = (int**)alloc.malloc(5);
+  int** test2 = (int**)alloc.malloc(11);
+  int** test3 = (int**)alloc.malloc(16);
+  int** test4 = (int**)alloc.malloc(27);
+  int** test5 = (int**)alloc.malloc(43);
+  alloc.free(*test2);
+  alloc.free(*test4);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->startLoc, *test2);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->next->startLoc, *test4);
+  GTEST_ASSERT_EQ(alloc.getOccHead()->startLoc, *test1);
+  TestConnections(alloc);
+}
+
 TEST(AllocatorDefragment, Malloc){
   //double free error-same block deallocated 2+ times 
   Allocator alloc(8192);
