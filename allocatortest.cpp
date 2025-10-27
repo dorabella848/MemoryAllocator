@@ -48,6 +48,7 @@ void TestConnections(Allocator& alloc){
       if(currentChunk->Free){
         GTEST_ASSERT_FALSE(currentChunk->AbsNext->Free);
       }
+      GTEST_ASSERT_EQ(currentChunk->startIndex+currentChunk->chunkSize, currentChunk->AbsNext->startIndex);
     }
     currentChunk = currentChunk->AbsNext;
   }
