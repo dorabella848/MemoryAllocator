@@ -77,8 +77,14 @@ void** Allocator::malloc(size_t size)
     if(size <= 0){
         return nullptr;
     }
+
+    // No point in checking anything if there isnt theoretically enough space
+    if(freeMemory < size){
+        cout << "Malloc failed for pointer of size (" << size  <<"): lack of free memory" << endl;
+        return nullptr;
+    }
+
     Chunk* freeCurrent = freeHead;
-    
     while(freeCurrent != nullptr){
         if(freeCurrent->chunkSize >= size){
             break;
@@ -86,7 +92,16 @@ void** Allocator::malloc(size_t size)
         freeCurrent = freeCurrent->next;
     }
     if(freeCurrent == nullptr){
-        return nullptr;
+        // If no single free chunk had enough space but we have enough total free memory then fragmentation
+        // is the limitation
+        // This could lead to an inf loop if freeMemory is not properly tracked
+        if(freeMemory > size){
+            defragment();
+            return malloc(size);
+        }
+        else{
+            return nullptr;
+        }
     }
 
     Chunk* newChunk = new Chunk(freeCurrent->startIndex, size, false);
@@ -136,6 +151,8 @@ void** Allocator::malloc(size_t size)
         }
         delete freeCurrent;
     }
+    // Update freeMemory tracker
+    freeMemory -= size;
 
     return &(newChunk->startLoc);
 
@@ -156,7 +173,7 @@ void Allocator::free(void* ptr){
     Chunk* newFree = occHead;
     // keep track of previous occupied chunk so there is no need to maintain a prev variable
     //Chunk* prevOccChunk = nullptr;
-
+    
     while(newFree != nullptr){
         if(newFree->startLoc == ptr){
             break;
@@ -166,6 +183,9 @@ void Allocator::free(void* ptr){
     if(newFree == nullptr){
         return;
     }
+    // Since we know the ptr exists we can update freeMemory here
+    freeMemory += newFree->chunkSize;
+
     if(newFree == occHead){
         if(newFree->next != nullptr){
             occHead = newFree->next;
@@ -247,15 +267,18 @@ void Allocator::free(void* ptr){
 }
 
 void Allocator::defragment(){
-    // (this does not work)
-
+    if(freeMemory <= 0){
+        throw logic_error("Defragment was called when no Free memory exists");
+    }
     // Go through every freeChunk that is not the last free chunk
     // and shift all the occupied chunk to the left (add the free chunk's size to the next free chunk)
     // repeat until all free chunks are moved to the end
     Chunk* occCurrent = occHead;
     Chunk* freeCurrent = freeHead;
     Chunk* prevFreeChunk = nullptr;
+    // The total number of occupied bytes to be moved after each free chunk relocation
     int totalMove = 0;
+    // The total number of free bytes moved to the final free chunk
     int totalFree = 0;
     while(freeCurrent->next != nullptr){
         
@@ -297,8 +320,8 @@ void Allocator::defragment(){
     freeCurrent->prev = nullptr;
     freeHead = freeCurrent;
     
-    if(totalFree == 0){
-        cout << "WARNING: Defragment was called but no free chunk positions were shifted" << endl;
+    if(totalFree == 0 || totalMove == 0){
+        throw logic_error("Fatal error: Defragment was called but nothing was moved");
     }
     
 };
@@ -326,6 +349,14 @@ void** Allocator::realloc(void* ptr, size_t size){
     if(target == nullptr){
         return nullptr;
     }
+    // Check if its even possible to perform the new reallocation
+    if(freeMemory < size - target->chunkSize){
+        cout << "Reallocation failed for " << ptr << ": lack of free memory" << endl;
+        return &(target->startLoc);
+    }
+    // We know the pointers exist so we can update freeMemory
+    freeMemory += (target->chunkSize - size);
+
     if (target->chunkSize >= size){
         // if there is a free chunk to the right of target there is no need to create a new free chunk
         if(target->AbsNext != nullptr && target->AbsNext->Free){

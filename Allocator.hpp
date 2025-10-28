@@ -12,6 +12,7 @@ using namespace std;
 class Allocator {
     private:
         int memorySize;
+        int freeMemory;
         static inline uint8_t* memoryPool;
         Chunk* occHead = nullptr;
         Chunk* freeHead = nullptr;
@@ -20,6 +21,7 @@ class Allocator {
         
         Allocator(size_t numBytes){
             memorySize = numBytes;
+            freeMemory = numBytes;
             memoryPool = new uint8_t[memorySize];
             freeHead = new Chunk(0, memorySize, true);
             (*freeHead).startLoc = &memoryPool[0];
