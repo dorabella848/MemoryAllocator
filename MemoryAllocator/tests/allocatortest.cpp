@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "Allocator.cpp"
+#include "Allocator.hpp"
 #include <random>
 
 // g++ AllocatorRunner.cpp -o AllocatorRunner.exe
