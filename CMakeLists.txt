@@ -6,10 +6,10 @@ enable_testing()
 find_library(GTest gtest)
 add_subdirectory(googletest)
 
-add_executable(allocatortest allocatortest.cpp)
+add_executable(allocatortest.exe allocatortest.cpp)
 
-target_include_directories(allocatortest PRIVATE googletest/include)
-target_link_libraries(allocatortest PRIVATE gtest gtest_main)
+target_include_directories(allocatortest.exe PRIVATE googletest/include)
+target_link_libraries(allocatortest.exe PRIVATE gtest gtest_main)
 
 include(GoogleTest)
-gtest_discover_tests(allocatortest)
+gtest_discover_tests(allocatortest.exe)
