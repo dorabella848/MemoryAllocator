@@ -43,7 +43,7 @@ void Allocator::printChunks(){
         printf("Ptr: %-14p\n", currentChunk->startLoc);
         printf("{ Free:  %-5s", currentChunk->Free ? "true" : "false");
         printf("| AbsNext: %-14p", (currentChunk->AbsNext != nullptr) ? currentChunk->AbsNext->startLoc : nullptr);
-        printf("| Size: %-*d", (int)round(log10(memorySize)), currentChunk->chunkSize);
+        printf("| Size: %-*zu", (int)round(log10(memorySize)), currentChunk->chunkSize);
         printf("| startIndex: %-*d", (int)round(log10(memorySize))-1, currentChunk->startIndex);
         printf("| AbsPrev: %-14p", (currentChunk->AbsPrev != nullptr) ? currentChunk->AbsPrev->startLoc : nullptr);
         printf("| next: %-14p", (currentChunk->next != nullptr) ? currentChunk->next->startLoc : nullptr);
@@ -382,8 +382,7 @@ void** Allocator::realloc(void* ptr, size_t size){
     }
     else {
         // Added min function since we dont want to copy more than necessary since it is a waste of time.
-        // We may want to change chunkSize to size_t so we dont have to convert to int64_t here
-        int dataSize = min((int64_t)target->chunkSize, (int64_t)size);
+        int dataSize = min(target->chunkSize, size);
         uint8_t savedData[dataSize];
         memcpy(savedData, ptr, dataSize);
         Allocator::free(target->startLoc);
