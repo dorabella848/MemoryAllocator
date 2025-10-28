@@ -12,4 +12,9 @@ int main()
   alloc.free(*test4);
   alloc.printChunks();
   // Keep track of all free chunks and implement defragment to automatically be called
+
+  // Maybe we could get rid of the prev variable in the chunks and in the functions
+  // since its not used for anything and is just bloating overhead and reducing readability.
+  // maybe rewrite chunksize to be a size_t
+
 };
