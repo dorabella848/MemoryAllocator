@@ -1,8 +1,9 @@
 #include <cstdlib>
+#include <cstddef>
 struct Chunk {
     int startIndex;
     void* startLoc;
-    size_t chunkSize;
+    std::size_t chunkSize;
     bool Free;
     // Next free/occupied chunk dependent on current free state
     Chunk* next;

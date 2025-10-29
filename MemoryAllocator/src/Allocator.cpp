@@ -1,6 +1,9 @@
 #include "Allocator.hpp"
 #include <cstdio>
 #include <cmath> 
+#include <iostream>
+using namespace std;
+
 Chunk* Allocator::getFreeHead(){
     return freeHead;
 };
@@ -11,7 +14,7 @@ void* Allocator::getMemAddress(size_t index){
     return &memoryPool[index];
 }
 void Allocator::printChunks(){
-    cout<< "\nTotal Memory: " << memorySize << endl;
+    cout << "\nTotal Memory: " << memorySize << endl;
     switch(occHead != nullptr){
         case true: cout << "occHead: " << occHead->startLoc << endl; break;
         default: cout << "occHead: " << 0 << endl; break;

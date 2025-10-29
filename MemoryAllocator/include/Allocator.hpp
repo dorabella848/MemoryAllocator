@@ -1,14 +1,8 @@
-#include <iostream>
+#include "Chunk.hpp"
 #include <unistd.h>
 #include <new>
-#include <list>
-#include <cstring>
-#include <vector> 
-#include "Chunk.hpp"
 #include <cstdint>
-
 using namespace std;
-
 class Allocator {
     private:
         int memorySize;
