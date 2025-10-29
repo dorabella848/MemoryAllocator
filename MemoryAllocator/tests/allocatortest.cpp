@@ -2,9 +2,10 @@
 #include "Allocator.hpp"
 #include <random>
 
-// g++ AllocatorRunner.cpp -o AllocatorRunner.exe
-// g++ allocatortest.cpp -o allocatortest.exe -lgtest -lgtest_main -pthread
-// valgrind --leak-check=full --track-origins=yes ./allocatortest.exe
+// Move build files out of main directory,
+// you can still call cmake using ../(whatever folder has CMakeLists.txt which should be MemoryAllocator)
+
+// valgrind --leak-check=full --track-origins=yes ./build/allocatortest
 // --gtest_filter={TestSuite}.{TestName}
 // make
 // ctest
