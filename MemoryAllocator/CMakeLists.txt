@@ -3,6 +3,7 @@ set(GOOGLETEST_VERSION 1.15.2)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
+include(FetchContent)
 
 project(CodeDynamic LANGUAGES CXX)
 
@@ -14,11 +15,16 @@ target_include_directories(MemoryAllocator PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include/
 )
 
-add_subdirectory(googletest)
 # Test executable
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG v1.17.0
+)
+FetchContent_MakeAvailable(googletest)
+
 add_executable(allocatortest ${CMAKE_CURRENT_SOURCE_DIR}/tests/allocatortest.cpp)
 target_include_directories(allocatortest PRIVATE 
-    googletest/include 
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 target_link_libraries(allocatortest PRIVATE
