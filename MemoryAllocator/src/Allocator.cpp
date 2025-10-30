@@ -1,9 +1,15 @@
 #include "Allocator.hpp"
 #include <cstdio>
 #include <cmath> 
+#include <cstring>
+#include <iostream>
+#include <stdexcept> // logic_error
+#include <algorithm> // min()
+using namespace std;
+
 Chunk* Allocator::getFreeHead(){
     return freeHead;
-};
+}
 Chunk* Allocator::getOccHead(){
     return occHead;
 }
@@ -11,7 +17,7 @@ void* Allocator::getMemAddress(size_t index){
     return &memoryPool[index];
 }
 void Allocator::printChunks(){
-    cout<< "\nTotal Memory: " << memorySize << endl;
+    cout << "\nTotal Memory: " << memorySize << endl;
     switch(occHead != nullptr){
         case true: cout << "occHead: " << occHead->startLoc << endl; break;
         default: cout << "occHead: " << 0 << endl; break;
@@ -350,7 +356,7 @@ void** Allocator::realloc(void* ptr, size_t size){
         return nullptr;
     }
     // Check if its even possible to perform the new reallocation
-    if(freeMemory < size - target->chunkSize){
+    if( (size > target->chunkSize) && (freeMemory < size - target->chunkSize) ){
         cout << "Reallocation failed for " << ptr << ": lack of free memory" << endl;
         return &(target->startLoc);
     }
@@ -408,9 +414,9 @@ void** Allocator::realloc(void* ptr, size_t size){
         return &(target->startLoc);
     }
     else {
-        // Added min function since we dont want to copy more than necessary since it is a waste of time.
+        // Added min function since we dont want to copy more than necessary
         int dataSize = min(target->chunkSize, size);
-        uint8_t savedData[dataSize];
+        uint8_t* savedData = new uint8_t[dataSize]; // Have to use dynamic allocaiton since min() is processed at runtime
         memcpy(savedData, ptr, dataSize);
         Allocator::free(target->startLoc);
         void** newBlock = malloc(size);
@@ -418,6 +424,7 @@ void** Allocator::realloc(void* ptr, size_t size){
             return nullptr;
         }
         memcpy(*newBlock, savedData, dataSize);
+        delete savedData;
         return newBlock;    
     }
 }

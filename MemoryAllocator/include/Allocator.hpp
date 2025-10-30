@@ -1,13 +1,6 @@
-#include <iostream>
-#include <unistd.h>
-#include <new>
-#include <list>
-#include <cstring>
-#include <vector> 
 #include "Chunk.hpp"
+#include <new>
 #include <cstdint>
-
-using namespace std;
 
 class Allocator {
     private:
@@ -19,7 +12,7 @@ class Allocator {
         
     public:
         
-        Allocator(size_t numBytes){
+        Allocator(std::size_t numBytes){
             memorySize = numBytes;
             freeMemory = numBytes;
             memoryPool = new uint8_t[memorySize];
@@ -28,13 +21,13 @@ class Allocator {
         };
         Chunk* getFreeHead();
         Chunk* getOccHead();
-        void* getMemAddress(size_t index);
+        void* getMemAddress(std::size_t index);
         void printChunks();
-        void** malloc(size_t size);
+        void** malloc(std::size_t size);
         void free(void* ptr);
         void defragment();
-        void** calloc(size_t number, size_t size);
-        void** realloc(void* ptr, size_t size);
+        void** calloc(std::size_t number, std::size_t size);
+        void** realloc(void* ptr, std::size_t size);
         
         
         ~Allocator(){
