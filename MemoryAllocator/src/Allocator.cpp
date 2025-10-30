@@ -356,7 +356,7 @@ void** Allocator::realloc(void* ptr, size_t size){
         return nullptr;
     }
     // Check if its even possible to perform the new reallocation
-    if(freeMemory < size - target->chunkSize){
+    if( (size > target->chunkSize) && (freeMemory < size - target->chunkSize) ){
         cout << "Reallocation failed for " << ptr << ": lack of free memory" << endl;
         return &(target->startLoc);
     }
