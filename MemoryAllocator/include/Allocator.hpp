@@ -7,8 +7,8 @@ class Allocator {
         int memorySize;
         int freeMemory;
         static inline uint8_t* memoryPool;
-        Chunk* occHead;
-        Chunk* freeHead;
+        Chunk* occHead = nullptr;
+        Chunk* freeHead = nullptr;
         
     public:
         Allocator(std::size_t numBytes);

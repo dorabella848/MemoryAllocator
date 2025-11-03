@@ -10,12 +10,10 @@ using namespace std;
 
 // Ctor
 Allocator::Allocator(size_t numBytes){
-    Allocator::occHead = nullptr;
-    Allocator::freeHead = nullptr;
-    Allocator::memorySize = numBytes;
-    Allocator::freeMemory = numBytes;
-    Allocator::memoryPool = new uint8_t[memorySize];
-    Allocator::freeHead = new Chunk(0, memorySize, true);
+    memorySize = numBytes;
+    freeMemory = numBytes;
+    memoryPool = new uint8_t[memorySize];
+    freeHead = new Chunk(0, memorySize, true);
     (*freeHead).startLoc = &memoryPool[0];
 };
 // Dtor
