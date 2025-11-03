@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "Allocator.hpp"
+#include "Chunk.hpp"
 #include <random>
 
 // Move build files out of main directory,
