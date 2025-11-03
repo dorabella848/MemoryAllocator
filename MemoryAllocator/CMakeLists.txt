@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
 include(FetchContent)
 
-project(CodeDynamic LANGUAGES CXX)
+project(MemoryAllocator LANGUAGES CXX)
 
 enable_testing()
 add_library(MemoryAllocator STATIC
