@@ -468,7 +468,7 @@ void** Allocator::realloc(void* ptr, size_t size){
             return nullptr;
         }
         memcpy(*newBlock, savedData, dataSize);
-        delete savedData;
+        delete[] savedData;
         return newBlock;    
     }
 }
