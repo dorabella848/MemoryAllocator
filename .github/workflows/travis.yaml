@@ -34,7 +34,7 @@ jobs:
     
     - name: Install Valgrind
       run: sudo apt-get update && sudo apt-get install -y valgrind gcc
-      
+
     - name: Run Gtests via Valgrind
       working-directory: ${{github.workspace}}/build
       run: valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./allocatortest
