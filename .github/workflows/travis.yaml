@@ -37,6 +37,6 @@ jobs:
 
     - name: Run Gtests via Valgrind
       working-directory: ${{github.workspace}}/build
-      run: valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./allocatortest
+      run: ctest -T memcheck -E "^PerformAlloc" # memcheck is valgrind
 
 

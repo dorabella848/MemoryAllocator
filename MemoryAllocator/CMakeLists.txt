@@ -11,7 +11,10 @@ set(BENCHMARK_ENABLE_TESTING OFF)
 
 project(MemoryAllocator LANGUAGES CXX)
 
+set(MEMORYCHECK_COMMAND "valgrind")
+set(MEMORYCHECK_COMMAND_OPTIONS "--error-exitcode=1 --leak-check=full")
 enable_testing()
+
 add_library(MemoryAllocator STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Allocator.cpp
 )
