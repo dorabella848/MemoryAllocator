@@ -57,6 +57,9 @@ Chunk* Allocator::getFreeHead(){
 Chunk* Allocator::getOccHead(){
     return occHead;
 }
+int Allocator::getFreeMemory(){
+    return freeMemory;
+}
 void* Allocator::getMemAddress(size_t index){
     return &memoryPool[index];
 }
