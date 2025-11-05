@@ -1,0 +1,69 @@
+        -:    0:Source:/home/ellie/MemoryAllocator/include/Allocator.hpp
+        -:    0:Graph:build/CMakeFiles/allocatortest.dir/tests/allocatortest.cpp.gcno
+        -:    0:Data:build/CMakeFiles/allocatortest.dir/tests/allocatortest.cpp.gcda
+        -:    0:Runs:3
+        -:    1:#include "Chunk.hpp"
+        -:    2:#include <new>
+        -:    3:#include <cstdint>
+        -:    4:
+        -:    5:class Allocator {
+        -:    6:    private:
+        -:    7:        int memorySize;
+        -:    8:        int freeMemory;
+        -:    9:        static inline uint8_t* memoryPool;
+        -:   10:        Chunk* occHead = nullptr;
+        -:   11:        Chunk* freeHead = nullptr;
+        -:   12:        
+        -:   13:    public:
+        -:   14:        
+       26:   15:        Allocator(std::size_t numBytes){
+       26:   16:            memorySize = numBytes;
+       26:   17:            freeMemory = numBytes;
+       26:   18:            memoryPool = new uint8_t[memorySize];
+       26:   19:            freeHead = new Chunk(0, memorySize, true);
+       26:   20:            (*freeHead).startLoc = &memoryPool[0];
+       26:   21:        };
+        -:   22:        Chunk* getFreeHead();
+        -:   23:        Chunk* getOccHead();
+        -:   24:        void* getMemAddress(std::size_t index);
+        -:   25:        void printChunks();
+        -:   26:        void** malloc(std::size_t size);
+        -:   27:        void free(void* ptr);
+        -:   28:        void defragment();
+        -:   29:        void** calloc(std::size_t number, std::size_t size);
+        -:   30:        void** realloc(void* ptr, std::size_t size);
+        -:   31:        
+        -:   32:        
+       26:   33:        ~Allocator(){
+       26:   34:            delete[] memoryPool;
+        -:   35:            // Delete all free and occupied chunks
+       26:   36:            Chunk* currentChunk = nullptr;
+       26:   37:            if(occHead == nullptr){
+        9:   38:                currentChunk = freeHead;
+        -:   39:            }
+       17:   40:            else if(freeHead == nullptr){
+        5:   41:                currentChunk = occHead;
+        -:   42:
+        -:   43:            }
+       12:   44:            else if(occHead->startIndex == 0){
+       12:   45:                currentChunk = occHead;
+        -:   46:            }
+        -:   47:            else{
+    #####:   48:                currentChunk = freeHead;
+        -:   49:            }
+        -:   50:
+       26:   51:            Chunk* occCurrent = occHead;
+ 10000065:   52:            while(currentChunk != nullptr){
+ 10000065:   53:                if(currentChunk->AbsNext != nullptr){
+ 10000039:   54:                    currentChunk = currentChunk->AbsNext;
+ 10000039:   55:                    delete currentChunk->AbsPrev;
+        -:   56:                }
+        -:   57:                else{
+       26:   58:                    delete currentChunk;
+       26:   59:                    break;
+        -:   60:                }
+        -:   61:                
+        -:   62:
+        -:   63:            }
+       26:   64:        }
+        -:   65:    };
