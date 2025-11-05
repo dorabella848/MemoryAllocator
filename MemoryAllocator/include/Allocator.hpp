@@ -1,6 +1,6 @@
-#include "Chunk.hpp"
 #include <new>
 #include <cstdint>
+struct Chunk;
 
 class Allocator {
     private:
@@ -11,14 +11,8 @@ class Allocator {
         Chunk* freeHead = nullptr;
         
     public:
-        
-        Allocator(std::size_t numBytes){
-            memorySize = numBytes;
-            freeMemory = numBytes;
-            memoryPool = new uint8_t[memorySize];
-            freeHead = new Chunk(0, memorySize, true);
-            (*freeHead).startLoc = &memoryPool[0];
-        };
+        Allocator(std::size_t numBytes);
+        ~Allocator();
         Chunk* getFreeHead();
         Chunk* getOccHead();
         void* getMemAddress(std::size_t index);
@@ -28,38 +22,4 @@ class Allocator {
         void defragment();
         void** calloc(std::size_t number, std::size_t size);
         void** realloc(void* ptr, std::size_t size);
-        
-        
-        ~Allocator(){
-            delete[] memoryPool;
-            // Delete all free and occupied chunks
-            Chunk* currentChunk = nullptr;
-            if(occHead == nullptr){
-                currentChunk = freeHead;
-            }
-            else if(freeHead == nullptr){
-                currentChunk = occHead;
-
-            }
-            else if(occHead->startIndex == 0){
-                currentChunk = occHead;
-            }
-            else{
-                currentChunk = freeHead;
-            }
-
-            Chunk* occCurrent = occHead;
-            while(currentChunk != nullptr){
-                if(currentChunk->AbsNext != nullptr){
-                    currentChunk = currentChunk->AbsNext;
-                    delete currentChunk->AbsPrev;
-                }
-                else{
-                    delete currentChunk;
-                    break;
-                }
-                
-
-            }
-        }
-    };
+};

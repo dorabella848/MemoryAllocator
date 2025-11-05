@@ -1,4 +1,5 @@
 #include "Allocator.hpp"
+#include "Chunk.hpp"
 #include <cstdio>
 #include <cmath> 
 #include <cstring>
@@ -6,6 +7,49 @@
 #include <stdexcept> // logic_error
 #include <algorithm> // min()
 using namespace std;
+
+// Ctor
+Allocator::Allocator(size_t numBytes){
+    memorySize = numBytes;
+    freeMemory = numBytes;
+    memoryPool = new uint8_t[memorySize];
+    freeHead = new Chunk(0, memorySize, true);
+    (*freeHead).startLoc = &memoryPool[0];
+};
+// Dtor
+Allocator::~Allocator(){
+    delete[] memoryPool;
+    // Delete all free and occupied chunks
+    Chunk* currentChunk = nullptr;
+    if(occHead == nullptr){
+        currentChunk = freeHead;
+    }
+    else if(freeHead == nullptr){
+        currentChunk = occHead;
+
+    }
+    else if(occHead->startIndex == 0){
+        currentChunk = occHead;
+    }
+    else{
+        currentChunk = freeHead;
+    }
+
+    Chunk* occCurrent = occHead;
+    while(currentChunk != nullptr){
+        if(currentChunk->AbsNext != nullptr){
+            currentChunk = currentChunk->AbsNext;
+            delete currentChunk->AbsPrev;
+        }
+        else{
+            delete currentChunk;
+            break;
+        }
+        
+
+    }
+}
+
 
 Chunk* Allocator::getFreeHead(){
     return freeHead;
