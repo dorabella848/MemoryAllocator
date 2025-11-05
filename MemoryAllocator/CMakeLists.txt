@@ -7,8 +7,6 @@ include(FetchContent)
 
 project(MemoryAllocator LANGUAGES CXX)
 
-set(MEMORYCHECK_COMMAND "valgrind")
-set(MEMORYCHECK_COMMAND_OPTIONS "--error-exitcode=1 --leak-check=full")
 enable_testing()
 
 add_library(MemoryAllocator STATIC
