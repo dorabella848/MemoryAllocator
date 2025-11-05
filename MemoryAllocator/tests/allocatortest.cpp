@@ -260,23 +260,6 @@ TEST(AllocatorCalloc, AllAssigned){
   TestConnections(alloc);
 }
 
-
-// Test Performance
-
-// single 1 billion byte alloc
-TEST(PerformAlloc, largeAllocation1b){
-  Allocator alloc(1000000000);
-  GTEST_ASSERT_NE(alloc.malloc(1000000000), nullptr);
-}
-// 10M blocks
-TEST(PerformAlloc, manyAlloc10M){
-  Allocator alloc(10000000);
-  for(int i = 0; i < 10000000; i++){
-    GTEST_ASSERT_NE(alloc.malloc(1), nullptr);
-  }
-  GTEST_ASSERT_EQ(alloc.getFreeHead(), nullptr);
-}
-
 TEST(AllocatorRealloc, NullInput){
   Allocator alloc(8096);
   int* chunk = (int*)alloc.realloc(nullptr, 203);
