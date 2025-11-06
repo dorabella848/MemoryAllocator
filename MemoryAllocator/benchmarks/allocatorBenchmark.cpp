@@ -20,6 +20,25 @@ static void Malloc_Complexity(benchmark::State& state) {
 }
 BENCHMARK(Malloc_Complexity)->Range(1, 1 << 16)->Complexity();
 
+// Allocate a psuedo-random sized chunk, clear memory pool if it returns nullptr, clear memory pool and attempt again
+// Run for 1 million allocations
+static void Malloc_Performance(benchmark::State& state){
+    auto alloc = std::make_unique<Allocator>(INT32_MAX);
+    int allocationSize = rand() % 1<<8;  // 256
+    void** ptr = nullptr;
+    for (auto _ : state){
+        ptr = alloc->malloc(allocationSize);
+        if (ptr == nullptr) {
+            state.PauseTiming();
+            alloc.reset();
+            alloc = std::make_unique<Allocator>(INT32_MAX);
+            state.ResumeTiming();
+        }
+    }
+
+}
+BENCHMARK(Malloc_Performance)->Iterations(1000*1000)->Complexity();
+
 // Allocate posToBeFreed number of chunks of size BlockSize and attempt to free the final chunk
 static void Free_Complexity_Size(benchmark::State& state){
     Allocator alloc(INT32_MAX);
