@@ -404,10 +404,10 @@ void** Allocator::realloc(void* ptr, size_t size){
         cout << "Reallocation failed for " << ptr << ": lack of free memory" << endl;
         return &(target->startLoc);
     }
-    // We know the pointers exist so we can update freeMemory
-    freeMemory += (target->chunkSize - size);
 
     if (target->chunkSize >= size){
+        // We know the pointers exist so we can update freeMemory
+        freeMemory -= (size - target->chunkSize);
         // if there is a free chunk to the right of target there is no need to create a new free chunk
         if(target->AbsNext != nullptr && target->AbsNext->Free){
             target->AbsNext->chunkSize += target->chunkSize-size;
