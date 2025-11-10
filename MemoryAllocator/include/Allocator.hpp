@@ -15,6 +15,7 @@ class Allocator {
         ~Allocator();
         Chunk* getFreeHead();
         Chunk* getOccHead();
+        int getFreeMemory();
         void* getMemAddress(std::size_t index);
         void printChunks();
         void** malloc(std::size_t size);
