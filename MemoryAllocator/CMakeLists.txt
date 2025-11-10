@@ -8,6 +8,7 @@ include(FetchContent)
 project(MemoryAllocator LANGUAGES CXX)
 
 enable_testing()
+
 add_library(MemoryAllocator STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Allocator.cpp
 )
