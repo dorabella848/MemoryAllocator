@@ -4,3 +4,4 @@ googletest/
 .vscode/
 *.json
 gcov/
+mingw-toolchain.cmake
