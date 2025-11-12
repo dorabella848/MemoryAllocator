@@ -3,3 +3,4 @@ build/
 googletest/
 .vscode/
 *.json
+gcov/
