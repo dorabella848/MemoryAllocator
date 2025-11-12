@@ -15,6 +15,18 @@ For example:
 
 <img width="932" height="372" alt="chunkDiagram" src="https://github.com/user-attachments/assets/f867bf89-59da-43be-a9e1-ca2dfedbf507" />
 
+### Allocator Functionality
+This section describes how the allocator works and the reimplementation of functions used (malloc(), calloc(), realloc(), free(), and defragment())
+
+#### malloc()
+malloc() is reimplemented for basic allocation of memory. When the function is called, the iterator moves through the memory pool until the free block is found. The memory is then allocated and the block is marked as occupied. The newly occupied block is removed from the free list. 
+
+
+#### calloc()
+calloc() is reimplemented the same as its original function. It creates an array of dynamically allocated objects and sets all bytes to 0. 
+
+#### realloc()
+
 
 
 
