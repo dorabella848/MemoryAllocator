@@ -5,3 +5,4 @@ googletest/
 *.json
 gcov/
 mingw-toolchain.cmake
+coverage_html/
