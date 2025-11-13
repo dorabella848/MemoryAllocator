@@ -5,7 +5,6 @@
 #include <cstring>
 #include <iostream>
 #include <stdexcept> // logic_error
-#include <algorithm> // min()
 using namespace std;
 
 // Ctor
@@ -461,18 +460,37 @@ void** Allocator::realloc(void* ptr, size_t size){
         return &(target->startLoc);
     }
     else {
-        // Added min function since we dont want to copy more than necessary
-        int dataSize = min(target->chunkSize, size);
-        uint8_t* savedData = new uint8_t[dataSize]; // Have to use dynamic allocaiton since min() is processed at runtime
-        memcpy(savedData, ptr, dataSize);
-        Allocator::free(target->startLoc);
-        void** newBlock = malloc(size);
-        if (*newBlock == nullptr){
-            return nullptr;
+        // Implement the code that will check if theres free memory ahead of the chunk and see 
+        // if there is any need to generate a new chunk rather than updating the old one
+
+        // Maybe implement the code to see if it would be faster to move the chunks ahead of the target
+        // rather than move the target itself 
+        // (this may be the case whenever the extra needed space required to perform the reallocation in place
+        // is less than the main chunk itself I.e moving the data of a 50 byte chunk would be easier than
+        // a one million byte chunk)
+        if(target->AbsNext->Free && (target->chunkSize + target->AbsNext->chunkSize) > size){
+            // Remove used space from next free chunk
+            target->AbsNext->startIndex += (size - target->chunkSize); 
+            target->AbsNext->chunkSize -= (size - target->chunkSize);
+            // Since this is performed in place we have to manually update freeMemory
+            Allocator::freeMemory -= (size - target->chunkSize);
+
+            target->AbsNext->startLoc = getMemAddress(target->AbsNext->startIndex);
+            // Update target itself
+            target->chunkSize = size;
+            return &(target->startLoc);
+
         }
-        memcpy(*newBlock, savedData, dataSize);
-        delete[] savedData;
-        return newBlock;    
+        else{
+            int targetSize = target->chunkSize;
+            Allocator::free(target->startLoc);
+            void** newBlock = malloc(size);
+            if(*newBlock == nullptr){
+                return nullptr;
+            }
+            memmove(*newBlock, ptr, targetSize);
+            return newBlock;  
+        }  
     }
 }
 
