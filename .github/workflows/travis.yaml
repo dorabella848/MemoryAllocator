@@ -38,5 +38,5 @@ jobs:
     - name: Run Gtests via Valgrind
       working-directory: ${{github.workspace}}/build
       run: 
-        valgrind ./allocatortest --gtest_filter=-PerformAlloc.* # Exclude performance tests
+        valgrind ./allocatortest
 
