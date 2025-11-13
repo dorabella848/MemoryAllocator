@@ -38,5 +38,5 @@ jobs:
     - name: Run Gtests via Valgrind
       working-directory: ${{github.workspace}}/build
       run: 
-        valgrind ./allocatortest
+        valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./allocatortest 
 
