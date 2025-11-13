@@ -3,3 +3,9 @@ build/
 googletest/
 .vscode/
 *.json
+gcov/
+mingw-toolchain.cmake
+coverage_html/
+coverage-report/
+_deps/
+CMakeFiles/
