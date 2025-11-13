@@ -6,7 +6,7 @@ class Allocator {
     private:
         int memorySize;
         int freeMemory;
-        static inline uint8_t* memoryPool;
+        uint8_t* memoryPool;
         Chunk* occHead = nullptr;
         Chunk* freeHead = nullptr;
         
