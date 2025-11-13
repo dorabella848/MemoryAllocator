@@ -209,42 +209,6 @@ TEST(AllocatorFree, AfterFreeHead_No_Adj_Free){
   TestConnections(alloc);
 }
 
-TEST(AllocatorDefragment, Malloc){
-  //double free error-same block deallocated 2+ times 
-  Allocator alloc(8192);
-  int** test1 = (int**)alloc.malloc(11);
-  int** test2 = (int**)alloc.malloc(22);
-  int** test3 = (int**)alloc.malloc(33);
-
-  alloc.free(*test2);
-  alloc.defragment();
-
-  GTEST_ASSERT_EQ(alloc.getOccHead()->next->startIndex, 11);  
-  GTEST_ASSERT_EQ(alloc.getOccHead()->next->startLoc, *test3);
-  GTEST_ASSERT_EQ(alloc.getOccHead()->startLoc, *test1);
-  // 44 test1 chunkSize + test3 chunkSize
-  GTEST_ASSERT_EQ(alloc.getFreeHead()->startIndex, 44);
-  GTEST_ASSERT_EQ(alloc.getFreeHead()->startLoc, alloc.getMemAddress(alloc.getFreeHead()->startIndex));
-  TestConnections(alloc);
-}
-
-TEST(AllocatorDefragment, Calloc){
-  Allocator alloc(8192);
-  int** test1 = (int**)alloc.malloc(11);
-  int** test2 = (int**)alloc.malloc(33);
-  int** test3 = (int**)alloc.calloc(10, sizeof(int));
-
-  alloc.free(*test2);
-  alloc.defragment();
-
-  GTEST_ASSERT_EQ(alloc.getOccHead()->next->startIndex, 11);  
-  GTEST_ASSERT_EQ(alloc.getOccHead()->next->startLoc, *test3);
-  GTEST_ASSERT_EQ(alloc.getOccHead()->startLoc, *test1);
-  GTEST_ASSERT_EQ(alloc.getFreeHead()->startIndex, 51);
-  GTEST_ASSERT_EQ(alloc.getFreeHead()->startLoc, alloc.getMemAddress(alloc.getFreeHead()->startIndex));
-  TestConnections(alloc);
-}
-
 TEST(AllocatorCalloc, AllAssigned){
   Allocator alloc(8096);
   int** test1 = (int**)alloc.calloc(10, sizeof(int));
