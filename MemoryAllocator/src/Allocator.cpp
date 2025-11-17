@@ -484,7 +484,7 @@ void** Allocator::realloc(void* ptr, size_t size){
         else{
             int targetSize = target->chunkSize;
             Allocator::free(target->startLoc);
-            void** newBlock = malloc(size);
+            void** newBlock = Allocator::malloc(size);
             if(*newBlock == nullptr){
                 return nullptr;
             }
