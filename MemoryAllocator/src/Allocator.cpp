@@ -473,8 +473,6 @@ void** Allocator::realloc(void* ptr, size_t size){
             target->AbsNext->chunkSize -= (size - target->chunkSize);
             // Since this is performed in place we have to manually update freeMemory
             Allocator::freeMemory -= (size - target->chunkSize);
-            // Update target itself
-            target->chunkSize = size;
 
             // Check if the free chunk used was exhausted
             Chunk* freeChunk = target->AbsNext;
@@ -505,6 +503,8 @@ void** Allocator::realloc(void* ptr, size_t size){
                 target->AbsNext->startIndex += (size - target->chunkSize); 
                 target->AbsNext->startLoc = getMemAddress(target->AbsNext->startIndex);
             }
+            // Update target itself
+            target->chunkSize = size;
             return &(target->startLoc);
 
         }
