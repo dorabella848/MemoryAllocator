@@ -468,16 +468,43 @@ void** Allocator::realloc(void* ptr, size_t size){
         // (this may be the case whenever the extra needed space required to perform the reallocation in place
         // is less than the main chunk itself I.e moving the data of a 50 byte chunk would be easier than
         // a one million byte chunk)
-        if(target->AbsNext->Free && (target->chunkSize + target->AbsNext->chunkSize) > size){
+        if(target->AbsNext->Free && (target->chunkSize + target->AbsNext->chunkSize) >= size){
             // Remove used space from next free chunk
-            target->AbsNext->startIndex += (size - target->chunkSize); 
             target->AbsNext->chunkSize -= (size - target->chunkSize);
             // Since this is performed in place we have to manually update freeMemory
             Allocator::freeMemory -= (size - target->chunkSize);
-
-            target->AbsNext->startLoc = getMemAddress(target->AbsNext->startIndex);
             // Update target itself
             target->chunkSize = size;
+
+            // Check if the free chunk used was exhausted
+            Chunk* freeChunk = target->AbsNext;
+            if(freeChunk->chunkSize == 0){
+                target->AbsNext = freeChunk->AbsNext;
+                if(freeChunk->AbsNext != nullptr){
+                    freeChunk->AbsNext->AbsPrev = target;
+                }
+                if(freeChunk->prev != nullptr){
+                    freeChunk->prev->next = freeChunk->next;
+                }
+                if(freeChunk == freeHead){
+                    freeHead = freeChunk->next;
+                    if(freeChunk->next != nullptr){
+                        freeChunk->next->prev = nullptr;
+                    }
+                }
+                else {
+                    if(freeChunk->next != nullptr){
+                        freeChunk->next->prev = freeChunk->prev;
+                    }
+                }
+                delete freeChunk;
+            }
+            else{
+                // if the free block stays, then we have to update its positional pointers (otherwise we end up
+                // deleting the next occupied chunk)
+                target->AbsNext->startIndex += (size - target->chunkSize); 
+                target->AbsNext->startLoc = getMemAddress(target->AbsNext->startIndex);
+            }
             return &(target->startLoc);
 
         }
