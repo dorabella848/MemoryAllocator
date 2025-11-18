@@ -379,7 +379,7 @@ void Allocator::defragment(){
 };
 
 void** Allocator::calloc(size_t number, size_t size){
-    void** arr = (Allocator::malloc(number*size));
+    void** arr = (this->malloc(number*size));
     memset(*arr, 0, number*size);
     return arr;
 }
@@ -472,7 +472,7 @@ void** Allocator::realloc(void* ptr, size_t size){
             // Remove used space from next free chunk
             target->AbsNext->chunkSize -= (size - target->chunkSize);
             // Since this is performed in place we have to manually update freeMemory
-            Allocator::freeMemory -= (size - target->chunkSize);
+            this->freeMemory -= (size - target->chunkSize);
 
             // Check if the free chunk used was exhausted
             Chunk* freeChunk = target->AbsNext;
@@ -510,8 +510,8 @@ void** Allocator::realloc(void* ptr, size_t size){
         }
         else{
             int targetSize = target->chunkSize;
-            Allocator::free(target->startLoc);
-            void** newBlock = Allocator::malloc(size);
+            this->free(target->startLoc);
+            void** newBlock = this->malloc(size);
             if(*newBlock == nullptr){
                 return nullptr;
             }
