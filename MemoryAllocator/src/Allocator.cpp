@@ -376,6 +376,9 @@ void Allocator::defragment(){
 
 void* Allocator::calloc(size_t number, size_t size){
     void* arr = (Allocator::malloc(number*size));
+<<<<<<< HEAD
+>>>>>>> 04b24b9 (remove double pointers)
+=======
 >>>>>>> 04b24b9 (remove double pointers)
     memset(*arr, 0, number*size);
     return arr;

@@ -209,8 +209,6 @@ TEST(AllocatorFree, AfterFreeHead_No_Adj_Free){
   TestConnections(alloc);
 }
 
-<<<<<<< HEAD
-=======
 TEST(AllocatorDefragment, Malloc){
   //double free error-same block deallocated 2+ times 
   Allocator alloc(8192);
@@ -247,7 +245,6 @@ TEST(AllocatorDefragment, Calloc){
   TestConnections(alloc);
 }
 
->>>>>>> 04b24b9 (remove double pointers)
 TEST(AllocatorCalloc, AllAssigned){
   Allocator alloc(8096);
   int* test1 = (int*)alloc.calloc(10, sizeof(int));
