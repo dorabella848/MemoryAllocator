@@ -1,5 +1,5 @@
 # MemoryAllocator
-This document describes the design of the C++ Dynamic Memory Allocator. 
+This document describes the design of the C++ Dynamic Memory Allocator. It is compliant with, but not dependent on STL.
 
 This document is aimed at the following audiences:
  * software engineers
@@ -7,20 +7,32 @@ This document is aimed at the following audiences:
 
  This document assumes that you understand the basics of memory allocation.
 
+ Goals:
+  - efficiency
+  - not dependent on STL
+  - compliant with STL
+
+Non-Goals
+    - using less memory compared to existing allocation functions
+
 ## Data Structures
 There is one main data structure used in the **Memory Allocator**:
 * **Chunk**--> used to represent blocks of **allocated** memory
 
 ### Structure: Chunk
-The **Chunk** structure is used to represent blocks of memory within the memory pool. These Chunks can be either free or occupied (actively storing allocated memory). In the allocator, chunks are stored in three doubly linked lists: free list, occupied (occ) list, and absolute (abs) list.
+The **Chunk** structure is used to represent blocks of memory within the memory pool. These Chunks can be either free or occupied (actively storing allocated memory). In the allocator, chunks are stored in three doubly linked lists: free list, occupied (occ) list, and absolute (abs) list. 
 
- The free list is comprised of a contiguous Chunk of free memory that can be used for allocation. The occ list is comprised of a series of occupied Chunks. The abs list is comprised of both the occupied and free chunks, representing the memory pool as a whole. 
+ The free list is comprised of a contiguous Chunk of free memory that can be used for allocation. This chunk can be split when memory needs to be allocated. The occ list is comprised of a series of occupied Chunks. These chunks are not soretd in any particular order; typically, they will appear in the order they were allocated. 
+ 
+  The abs list is comprised of both the occupied and free chunks. Ideally, in a non-fragmented memory pool, it consists of a series of occupied chunks (typically sorted in order of allocation) with one contiguous free chunk at the end (all free memeory is included in this chunk). It functions as an easily traversable representation of the overall memory pool. The abs list is primarily used to check for fragmentation in the memory pool. 
+
+  Doubly linked lists allow for two-direction traversal, which is helpful when accounting for edge cases in which the previous object in a list needs to be referenced. For example, when maintaining one contiguous chunk of free memory in the free list, it may be necessary to see if there is another free chunk before the contiguous chunk so that the two can be combined. 
 
  <img width="1387" height="601" alt="chunkListDiagram" src="https://github.com/user-attachments/assets/ead3c2f7-caa6-4937-b2c8-d1447e859a6b" />
 
 
 ## Memory Allocation 
-To allocate memory, the program calls a reimplemented malloc() function. The function allocates the memory, taking away the needed memory size from the free list, adding the new occupied memory Chunk to the occ list, and updating the abs list to match. calloc() can also be used with the allocator. The function allocates memory the same way as the original C memory allocation function, but is adapted for the doubly-linked lists used in this allocator.  
+To allocate memory, the program calls a reimplemented malloc() function. The function allocates the memory by taking away the needed memory size from the free list, selecting a free chunk that is large enough to hold the newly allocated memory. The fundtion adds the new occupied memory Chunk to the occ list, and updates the abs list to match. calloc() can also be used with the allocator. The function allocates memory the same way as the original C memory allocation function, but is adapted for the doubly-linked lists used in this allocator.  
 
 When memory needs to be moved, or reallocated, the realloc() function is called. The function searches for space to reallocate the memory, reallocates the memory, and updates the free, occ, and abs list to match. 
 
