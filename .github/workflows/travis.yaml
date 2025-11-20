@@ -23,7 +23,7 @@ jobs:
       run: mkdir -p ${{github.workspace}}/build
 
     - name: Configure CMake
-      run: cmake -S ${{github.workspace}}/MemoryAllocator -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
+      run: cmake -S ${{github.workspace}}/MemoryAllocator -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build project
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
@@ -33,7 +33,7 @@ jobs:
       run: ctest --output-on-failure # Dont want to run the length valgrind if there is an inherent error with the logic in the code
     
     - name: Install Valgrind
-      run: sudo apt-get update && sudo apt-get install -y valgrind gcc
+      run: sudo apt-get update && sudo apt-get install -y valgrind
 
     - name: Run Gtests via Valgrind
       working-directory: ${{github.workspace}}/build
