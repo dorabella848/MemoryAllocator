@@ -141,8 +141,8 @@ TEST(AllocatorFree, FragmentedFree){
   int** test2 = (int**)alloc.malloc(22);
   int** test3 = (int**)alloc.malloc(33);
   alloc.free(*test2);
-  GTEST_ASSERT_EQ(alloc.getOccHead()->next->next, nullptr);
-  GTEST_ASSERT_EQ(alloc.getOccHead()->next->chunkSize, 33);
+  GTEST_ASSERT_TRUE(alloc.getOccHead()->AbsNext->Free);
+  GTEST_ASSERT_EQ(alloc.getOccHead()->AbsNext->AbsNext->chunkSize, 33);
   TestConnections(alloc);
 }
 TEST(AllocatorFree, InformationOverwriteFree){
@@ -246,7 +246,7 @@ TEST(AllocatorRealloc, GreaterThanAvailable){
   int** test2 = (int**)alloc.malloc(33);
   int** test3 = (int**)alloc.malloc(55);
   test2 = (int**)alloc.realloc(*test2, 45);
-  GTEST_ASSERT_EQ(*test2, alloc.getOccHead()->next->next->startLoc);
+  GTEST_ASSERT_EQ(*test2, alloc.getOccHead()->AbsNext->AbsNext->AbsNext->startLoc);
   TestConnections(alloc);
 }
 
@@ -259,7 +259,7 @@ TEST(AllocatorRealloc, ReUseSamePos){
 
   alloc.free(*test3);
   test2 = (int**)alloc.realloc(*test2, 58);
-  GTEST_ASSERT_EQ(*test2, (alloc.getOccHead()->next->startLoc));
+  GTEST_ASSERT_EQ(*test2, (alloc.getOccHead()->AbsNext->startLoc));
   TestConnections(alloc);
 }
 

@@ -161,17 +161,11 @@ void** Allocator::malloc(size_t size)
         freeCurrent->AbsPrev = newChunk;
     }
     else{
-        if(freeCurrent->AbsPrev->next != nullptr){
-            freeCurrent->AbsPrev->next->prev = newChunk;
-        }
         // Insert newChunk into the occupied list by using freeCurrent as the reference
-        freeCurrent->AbsPrev->next = newChunk;
         freeCurrent->AbsPrev->AbsNext = newChunk;
         newChunk->AbsPrev = freeCurrent->AbsPrev;
-        newChunk->prev = freeCurrent->AbsPrev;
         freeCurrent->AbsPrev = newChunk;
         newChunk->AbsNext = freeCurrent;
-        newChunk->next = freeCurrent->AbsNext;
     }
 
     if (freeCurrent->chunkSize == 0){
@@ -222,29 +216,29 @@ void Allocator::free(void* ptr){
         if(newFree->startLoc == ptr){
             break;
         }
-        newFree = newFree->next;
+        newFree = newFree->AbsNext;
     }
-    if(newFree == nullptr){
+    if(newFree == nullptr || newFree->Free){
         return;
     }
     // Since we know the ptr exists we can update freeMemory here
     freeMemory += newFree->chunkSize;
-
     if(newFree == occHead){
-        if(newFree->next != nullptr){
-            occHead = newFree->next;
+        if(newFree->AbsNext != nullptr){
+            if(!(newFree->AbsNext->Free)){
+                occHead = newFree->AbsNext;
+            } // in case newFree->AbsNext is free
+            else if(newFree->AbsNext->AbsNext != nullptr){ // we know it's occupied since AbsPrev was free
+                occHead = newFree->AbsNext->AbsNext;
+            }
+            else{
+                occHead = nullptr;
+            }
         }
         else{
             occHead = nullptr;
         }
-    }
-
-    if(newFree->prev != nullptr){
-        newFree->prev->next = newFree->next;
-    }
-    if(newFree->next != nullptr){
-        newFree->next->prev = newFree->prev;
-    }
+    }  
     newFree->Free = true;
     // check if adjacent chunks are free and merge if they are
     if( (newFree->AbsNext != nullptr && newFree->AbsNext->Free) || (newFree->AbsPrev != nullptr && newFree->AbsPrev->Free) ){
@@ -325,7 +319,7 @@ void** Allocator::realloc(void* ptr, size_t size){
         return nullptr;
     }
     while (target->startLoc != ptr){
-        target = target->next;
+        target = target->AbsNext;
         if (target == ptr){
             break;
         }
