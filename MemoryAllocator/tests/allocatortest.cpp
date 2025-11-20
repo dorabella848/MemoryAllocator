@@ -29,7 +29,13 @@ void TestConnections(Allocator& alloc){
       currentChunk = alloc.getFreeHead();
   }
   // Checking Connections
+  size_t totalMem = 0;
+  size_t totalFreeMem = 0;
   while(currentChunk != nullptr){
+    totalMem += currentChunk->chunkSize;
+    if(currentChunk->Free){
+      totalFreeMem += currentChunk->chunkSize;
+    }
     if(currentChunk->prev != nullptr){
       GTEST_ASSERT_LT(currentChunk->prev->startIndex, currentChunk->startIndex);
       GTEST_ASSERT_EQ(currentChunk->prev->next, currentChunk);
@@ -54,6 +60,8 @@ void TestConnections(Allocator& alloc){
     }
     currentChunk = currentChunk->AbsNext;
   }
+  GTEST_ASSERT_EQ(totalFreeMem, alloc.getFreeMemory());
+  GTEST_ASSERT_EQ(totalMem, alloc.getMemoryTotal());
 }
 
 TEST(AllocatorMalloc, MallocValidSize_AlmostFull) {
