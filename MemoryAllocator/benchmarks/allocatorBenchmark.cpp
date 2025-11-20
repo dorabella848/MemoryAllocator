@@ -25,7 +25,7 @@ BENCHMARK(Malloc_Complexity)->Range(1, 1 << 16)->Complexity();
 static void Malloc_Performance(benchmark::State& state){
     auto alloc = std::make_unique<Allocator>(INT32_MAX);
     int allocationSize = rand() % 1<<8;  // 256
-    void** ptr = nullptr;
+    void* ptr = nullptr;
     for (auto _ : state){
         ptr = alloc->malloc(allocationSize);
         if (ptr == nullptr) {
@@ -42,7 +42,7 @@ BENCHMARK(Malloc_Performance)->Iterations(1000*1000)->Complexity();
 // Allocate posToBeFreed number of chunks of size BlockSize and attempt to free the final chunk
 static void Free_Complexity_Size(benchmark::State& state){
     Allocator alloc(INT32_MAX);
-    void** finalChunk = nullptr;
+    void* finalChunk = nullptr;
     for(int i = 0; i < state.range(1); i++){
         finalChunk = alloc.malloc(state.range(0)); // Max num bytes needed is 2^12 * 2^4 = 2^16
     }
@@ -62,7 +62,7 @@ BENCHMARK(Free_Complexity_Size)->Ranges({{1, 1 << 4}, {1, 1 << 12}})->Complexity
 // Allocate state.range(0) number of  chunks and attempt to free the final chunk
 static void Free_Complexity(benchmark::State& state){
     Allocator alloc(INT32_MAX);
-    void** finalChunk = nullptr;
+    void* finalChunk = nullptr;
     for(int i = 0; i < state.range(0); i++){
         finalChunk = alloc.malloc(1); // Max num bytes needed is 2^16
     }
@@ -82,7 +82,7 @@ BENCHMARK(Free_Complexity)->Range(1, 1 << 24)->Complexity();
 // Test when reallocating a chunk to a larger chunksize
 static void ReallocMore_Complexity(benchmark::State& state){
     Allocator alloc(INT32_MAX);
-    void** TestChunk = alloc.malloc(state.range(0));
+    void* TestChunk = alloc.malloc(state.range(0));
 
     for (auto _ : state) {
         TestChunk = alloc.realloc(*TestChunk, state.range(0)*2); // Reallocate to *2 original size
