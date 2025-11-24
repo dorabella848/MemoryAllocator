@@ -5,7 +5,6 @@
 #include <cstring>
 #include <iostream>
 #include <stdexcept> // logic_error
-#include <algorithm> // min()
 using namespace std;
 
 // Ctor
@@ -311,7 +310,7 @@ void Allocator::free(void* ptr){
 }
 
 void** Allocator::calloc(size_t number, size_t size){
-    void** arr = (Allocator::malloc(number*size));
+    void** arr = (this->malloc(number*size));
     memset(*arr, 0, number*size);
     return arr;
 }
@@ -392,18 +391,64 @@ void** Allocator::realloc(void* ptr, size_t size){
         return &(target->startLoc);
     }
     else {
-        // Added min function since we dont want to copy more than necessary
-        int dataSize = min(target->chunkSize, size);
-        uint8_t* savedData = new uint8_t[dataSize]; // Have to use dynamic allocaiton since min() is processed at runtime
-        memcpy(savedData, ptr, dataSize);
-        Allocator::free(target->startLoc);
-        void** newBlock = malloc(size);
-        if (*newBlock == nullptr){
-            return nullptr;
+        // Implement the code that will check if theres free memory ahead of the chunk and see 
+        // if there is any need to generate a new chunk rather than updating the old one
+
+        // Maybe implement the code to see if it would be faster to move the chunks ahead of the target
+        // rather than move the target itself 
+        // (this may be the case whenever the extra needed space required to perform the reallocation in place
+        // is less than the main chunk itself I.e moving the data of a 50 byte chunk would be easier than
+        // a one million byte chunk)
+        if(target->AbsNext->Free && (target->chunkSize + target->AbsNext->chunkSize) >= size){
+            // Remove used space from next free chunk
+            target->AbsNext->chunkSize -= (size - target->chunkSize);
+            // Since this is performed in place we have to manually update freeMemory
+            this->freeMemory -= (size - target->chunkSize);
+
+            // Check if the free chunk used was exhausted
+            Chunk* freeChunk = target->AbsNext;
+            if(freeChunk->chunkSize == 0){
+                target->AbsNext = freeChunk->AbsNext;
+                if(freeChunk->AbsNext != nullptr){
+                    freeChunk->AbsNext->AbsPrev = target;
+                }
+                if(freeChunk->prev != nullptr){
+                    freeChunk->prev->next = freeChunk->next;
+                }
+                if(freeChunk == freeHead){
+                    freeHead = freeChunk->next;
+                    if(freeChunk->next != nullptr){
+                        freeChunk->next->prev = nullptr;
+                    }
+                }
+                else {
+                    if(freeChunk->next != nullptr){
+                        freeChunk->next->prev = freeChunk->prev;
+                    }
+                }
+                delete freeChunk;
+            }
+            else{
+                // if the free block stays, then we have to update its positional pointers (otherwise we end up
+                // deleting the next occupied chunk)
+                target->AbsNext->startIndex += (size - target->chunkSize); 
+                target->AbsNext->startLoc = getMemAddress(target->AbsNext->startIndex);
+            }
+            // Update target itself
+            target->chunkSize = size;
+            return &(target->startLoc);
+
         }
-        memcpy(*newBlock, savedData, dataSize);
-        delete[] savedData;
-        return newBlock;    
+        else{
+            int targetSize = target->chunkSize;
+            this->free(target->startLoc);
+            void** newBlock = this->malloc(size);
+            if(*newBlock == nullptr){
+                return nullptr;
+            }
+            memmove(*newBlock, ptr, targetSize);
+            return newBlock;  
+        }  
     }
 }
 
