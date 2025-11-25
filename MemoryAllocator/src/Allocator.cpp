@@ -160,7 +160,7 @@ void** Allocator::malloc(size_t size)
         freeCurrent->AbsPrev = newChunk;
     }
     else{
-        if(freeCurrent->AbsPrev->next != nullptr){
+        if(freeCurrent->AbsPrev != nullptr && freeCurrent->AbsPrev->next != nullptr){
             freeCurrent->AbsPrev->next->prev = newChunk;
         }
         // Insert newChunk into the occupied list by using freeCurrent as the reference
