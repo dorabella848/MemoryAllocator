@@ -310,77 +310,9 @@ void Allocator::free(void* ptr){
     prevFreeChunk->next = newFree;
 }
 
-<<<<<<< HEAD
-void** Allocator::calloc(size_t number, size_t size){
-    void** arr = (Allocator::malloc(number*size));
-=======
-void Allocator::defragment(){
-    if(freeMemory <= 0){
-        throw logic_error("Defragment was called when no Free memory exists");
-    }
-    // Go through every freeChunk that is not the last free chunk
-    // and shift all the occupied chunk to the left (add the free chunk's size to the next free chunk)
-    // repeat until all free chunks are moved to the end
-    Chunk* occCurrent = occHead;
-    Chunk* freeCurrent = freeHead;
-    Chunk* prevFreeChunk = nullptr;
-    // The total number of occupied bytes to be moved after each free chunk relocation
-    int totalMove = 0;
-    // The total number of free bytes moved to the final free chunk
-    int totalFree = 0;
-    while(freeCurrent->next != nullptr){
-        
-        void* occStartLoc = nullptr;
-        // totalFree must be tracked because we delete free chunks as we pass over them
-        totalFree += freeCurrent->chunkSize;
-
-        while(occCurrent->startIndex < freeCurrent->startIndex){
-            occCurrent = occCurrent->next;
-        }
-
-        while(occCurrent != nullptr && occCurrent->startIndex < freeCurrent->next->startIndex){
-            // Get the total number of occupied chunks in between two free chunks
-            // to figure out how many bytes to move over into the to be moved free chunk
-            totalMove += occCurrent->chunkSize;
-            if(occStartLoc == nullptr){
-                occStartLoc = occCurrent->startLoc;
-            }
-            occCurrent->startIndex -= freeCurrent->chunkSize;
-            occCurrent->startLoc = &memoryPool[occCurrent->startIndex];
-            occCurrent = occCurrent->next;
-        }
-        // Move the occupied bytes over by the total number of free bytes we have moved to the end
-        memmove(freeCurrent->startLoc, occStartLoc, totalMove);
-        prevFreeChunk = freeCurrent;
-        freeCurrent = freeCurrent->next;
-        if(prevFreeChunk->AbsPrev != nullptr){
-            prevFreeChunk->AbsPrev->AbsNext = prevFreeChunk->AbsNext;
-        }
-        prevFreeChunk->AbsNext->AbsPrev = prevFreeChunk->AbsPrev;
-        delete prevFreeChunk;
-    };
-
-    // Update the final free chunk which is at the end of the memory pool (it's also the freeHead)
-    
-    freeCurrent->startIndex -= totalFree;
-    freeCurrent->chunkSize += totalFree;
-    freeCurrent->startLoc = &memoryPool[freeCurrent->startIndex];
-    freeCurrent->prev = nullptr;
-    freeHead = freeCurrent;
-    
-    if(totalFree == 0 || totalMove == 0){
-        throw logic_error("Fatal error: Defragment was called but nothing was moved");
-    }
-    
-};
-
 void* Allocator::calloc(size_t number, size_t size){
     void* arr = (Allocator::malloc(number*size));
-<<<<<<< HEAD
->>>>>>> 04b24b9 (remove double pointers)
-=======
->>>>>>> 04b24b9 (remove double pointers)
-    memset(*arr, 0, number*size);
+    memset(arr, 0, number*size);
     return arr;
 }
 
@@ -466,10 +398,10 @@ void* Allocator::realloc(void* ptr, size_t size){
         memcpy(savedData, ptr, dataSize);
         Allocator::free(target->startLoc);
         void* newBlock = malloc(size);
-        if (*newBlock == nullptr){
+        if (newBlock == nullptr){
             return nullptr;
         }
-        memcpy(*newBlock, savedData, dataSize);
+        memcpy(newBlock, savedData, dataSize);
         delete[] savedData;
         return newBlock;    
     }
