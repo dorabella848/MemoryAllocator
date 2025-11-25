@@ -221,7 +221,7 @@ void Allocator::free(void* ptr){
         if(newFree->startLoc == ptr){
             break;
         }
-        newFree = newFree->next;
+        newFree = newFree->AbsNext;
     }
     if(newFree == nullptr){
         return;
@@ -324,7 +324,7 @@ void** Allocator::realloc(void* ptr, size_t size){
         return nullptr;
     }
     while (target->startLoc != ptr){
-        target = target->next;
+        target = target->AbsNext;
         if (target == ptr){
             break;
         }
