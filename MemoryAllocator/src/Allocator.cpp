@@ -160,17 +160,23 @@ void** Allocator::malloc(size_t size)
         freeCurrent->AbsPrev = newChunk;
     }
     else{
-        if(freeCurrent->AbsPrev != nullptr && freeCurrent->AbsPrev->next != nullptr){
-            freeCurrent->AbsPrev->next->prev = newChunk;
+        if(freeCurrent->AbsPrev != nullptr){
+            // Insert newChunk into the occupied list by using freeCurrent as the reference
+            freeCurrent->AbsPrev->next = newChunk;
+            freeCurrent->AbsPrev->AbsNext = newChunk;
         }
-        // Insert newChunk into the occupied list by using freeCurrent as the reference
-        freeCurrent->AbsPrev->next = newChunk;
-        freeCurrent->AbsPrev->AbsNext = newChunk;
+        if(freeCurrent->AbsNext != nullptr){
+            freeCurrent->AbsNext->prev = newChunk;
+        }
         newChunk->AbsPrev = freeCurrent->AbsPrev;
         newChunk->prev = freeCurrent->AbsPrev;
         freeCurrent->AbsPrev = newChunk;
         newChunk->AbsNext = freeCurrent;
         newChunk->next = freeCurrent->AbsNext;
+        if(freeCurrent->AbsNext == occHead){
+            occHead = newChunk;
+        }
+        
     }
 
     if (freeCurrent->chunkSize == 0){
