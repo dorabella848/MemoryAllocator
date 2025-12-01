@@ -5,7 +5,6 @@
 #include <cstring>
 #include <iostream>
 #include <stdexcept> // logic_error
-#include <algorithm> // min()
 using namespace std;
 
 // Ctor
@@ -59,6 +58,9 @@ Chunk* Allocator::getOccHead(){
 }
 int Allocator::getFreeMemory(){
     return freeMemory;
+}
+int Allocator::getMemoryTotal(){
+    return memorySize;
 }
 void* Allocator::getMemAddress(size_t index){
     return &memoryPool[index];
@@ -161,17 +163,23 @@ void* Allocator::malloc(size_t size)
         freeCurrent->AbsPrev = newChunk;
     }
     else{
-        if(freeCurrent->AbsPrev->next != nullptr){
-            freeCurrent->AbsPrev->next->prev = newChunk;
+        if(freeCurrent->AbsPrev != nullptr){
+            // Insert newChunk into the occupied list by using freeCurrent as the reference
+            freeCurrent->AbsPrev->next = newChunk;
+            freeCurrent->AbsPrev->AbsNext = newChunk;
         }
-        // Insert newChunk into the occupied list by using freeCurrent as the reference
-        freeCurrent->AbsPrev->next = newChunk;
-        freeCurrent->AbsPrev->AbsNext = newChunk;
+        if(freeCurrent->AbsNext != nullptr){
+            freeCurrent->AbsNext->prev = newChunk;
+        }
         newChunk->AbsPrev = freeCurrent->AbsPrev;
         newChunk->prev = freeCurrent->AbsPrev;
         freeCurrent->AbsPrev = newChunk;
         newChunk->AbsNext = freeCurrent;
         newChunk->next = freeCurrent->AbsNext;
+        if(freeCurrent->AbsNext == occHead){
+            occHead = newChunk;
+        }
+        
     }
 
     if (freeCurrent->chunkSize == 0){
@@ -222,7 +230,7 @@ void Allocator::free(void* ptr){
         if(newFree->startLoc == ptr){
             break;
         }
-        newFree = newFree->next;
+        newFree = newFree->AbsNext;
     }
     if(newFree == nullptr){
         return;
@@ -325,7 +333,7 @@ void* Allocator::realloc(void* ptr, size_t size){
         return nullptr;
     }
     while (target->startLoc != ptr){
-        target = target->next;
+        target = target->AbsNext;
         if (target == ptr){
             break;
         }

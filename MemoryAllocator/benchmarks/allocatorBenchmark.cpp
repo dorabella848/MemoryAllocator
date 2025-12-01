@@ -1,7 +1,7 @@
 #include <benchmark/benchmark.h>
 #include "Allocator.hpp"
 #include "Chunk.hpp"
-
+#include <cstring>
 // Continuously create chunks of a varied size, empty the memory pool when there is no free memory left
 static void Malloc_Complexity(benchmark::State& state) {
     auto alloc = std::make_unique<Allocator>(INT32_MAX);
@@ -85,14 +85,19 @@ static void ReallocMore_Complexity(benchmark::State& state){
     void* TestChunk = alloc.malloc(state.range(0));
 
     for (auto _ : state) {
+        state.PauseTiming();
+        alloc.free(*fragmentationMaker); // Create fragmentation
+        state.ResumeTiming();
+
         TestChunk = alloc.realloc(*TestChunk, state.range(0)*2); // Reallocate to *2 original size
 
         state.PauseTiming();
         alloc.free(*TestChunk);
+        fragmentationMaker = alloc.malloc(10000);
         TestChunk = alloc.malloc(state.range(0));
         state.ResumeTiming();
     }
     state.SetComplexityN(state.range(0));
 }
-BENCHMARK(ReallocMore_Complexity)->Range(1<<2, 1<<20)->Complexity();
+BENCHMARK(ReallocMore_Complexity)->DenseRange(30000000, 30000000*2, (30000000/25))->Complexity()->UseRealTime();
 BENCHMARK_MAIN();
