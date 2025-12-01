@@ -206,7 +206,7 @@ void* Allocator::malloc(size_t size)
     // Update freeMemory tracker
     freeMemory -= size;
 
-    return &(newChunk->startLoc);
+    return (newChunk->startLoc);
 
 }
 
