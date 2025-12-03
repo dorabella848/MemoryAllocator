@@ -42,6 +42,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: build-output
+        path: ${{github.workspace}}/build
 
     - name: Run Gtests
       working-directory: ${{github.workspace}}/build
@@ -65,6 +66,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: build-output
+        path: ${{github.workspace}}/build
 
     - name: Create .deb package
       working-directory: ${{github.workspace}}/build
@@ -86,6 +88,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: MemoryAllocatorDEB
+        path: ${{ github.workspace }}/build/memoryallocator-*.deb
 
     - name: Install .deb package
       run:
