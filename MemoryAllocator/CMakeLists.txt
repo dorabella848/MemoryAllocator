@@ -6,28 +6,36 @@ set(CMAKE_BUILD_TYPE Debug)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -O0 -g")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage -O0 -g")
-include(FetchContent)
-set(BENCHMARK_ENABLE_REGEX OFF)
-set(BENCHMARK_ENABLE_TESTING OFF)
 
 
 project(MemoryAllocator LANGUAGES CXX)
-
 enable_testing()
-add_library(MemoryAllocator STATIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Allocator.cpp
-)
-target_include_directories(MemoryAllocator PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/
-)
 
-# Benchmark executable
+include(FetchContent)
+
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG v1.17.0
+  GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(googletest)
+
+set(BENCHMARK_ENABLE_REGEX OFF)
+set(BENCHMARK_ENABLE_TESTING OFF)
 FetchContent_Declare(
   benchmark
   GIT_REPOSITORY https://github.com/google/benchmark.git
   GIT_TAG main
 )
 FetchContent_MakeAvailable(benchmark)
+
+add_library(MemoryAllocator STATIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Allocator.cpp
+)
+target_include_directories(MemoryAllocator PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/
+)
 
 add_executable(allocatorbenchmark ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/allocatorBenchmark.cpp)
 target_include_directories(allocatorbenchmark PRIVATE 
@@ -38,14 +46,6 @@ target_link_libraries(allocatorbenchmark PRIVATE
     benchmark_main
     MemoryAllocator
 )
-
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG v1.17.0
-  GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(googletest)
 
 add_executable(allocatortest ${CMAKE_CURRENT_SOURCE_DIR}/tests/allocatortest.cpp)
 target_include_directories(allocatortest PRIVATE 
@@ -58,30 +58,32 @@ target_link_libraries(allocatortest PRIVATE
 )
 
 add_executable(Runner ${CMAKE_CURRENT_SOURCE_DIR}/examples/AllocatorRunner.cpp)
-target_include_directories(Runner PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(Runner PRIVATE MemoryAllocator)
-
-if(CMAKE_CROSSCOMPILING)
-  message(STATUS "Skipping gtest_discover_tests due to cross-compilation")
-else()
-  include(GoogleTest)
-  gtest_discover_tests(allocatortest)
-endif()
-
-if(CMAKE_SYSTEM_NAME STREQUAL "Windows" AND NOT WIN32)
-  set(GTEST_DISCOVER_TESTS OFF)
-endif()
-
-if(NOT GTEST_DISCOVER_TESTS STREQUAL OFF)
-  include(GoogleTest)
-  gtest_discover_tests(allocatortest)
-endif()
-
-
+target_include_directories(Runner PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+target_link_libraries(Runner PRIVATE 
+    MemoryAllocator
+)
 
 include(GoogleTest)
 gtest_discover_tests(allocatortest)
 
+
+install(TARGETS Runner
+        RUNTIME DESTINATION bin)
+
+install(TARGETS MemoryAllocator
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
+
+set(CPACK_GENERATOR "DEB")
+set(CPACK_PACKAGE_NAME "memoryallocator")
+set(CPACK_PACKAGE_VERSION "1.0.0")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Intern Dev tim.vasenkov@gmail.com")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6, libstdc++6")
+set(CPACK_DEBIAN_PACKAGE_RELEASE 1)
+
+include(CPack)
 #For running gcov and lcov: 
 
 #./allocatortest 
