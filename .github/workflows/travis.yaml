@@ -10,12 +10,9 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  build:
-    # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
-    # You can convert this to a matrix build if you need cross-platform coverage.
-    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+  # Build the MemoryAllocator Project
+  Build: 
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
 
@@ -28,6 +25,24 @@ jobs:
     - name: Build project
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-output
+        path: ${{github.workspace}}/build
+
+  # Run the unit tests via ctest and valgrind
+  Test:
+    runs-on: ubuntu-latest
+    needs: Build
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+
     - name: Run Gtests
       working-directory: ${{github.workspace}}/build
       run: ctest --output-on-failure # Dont want to run the length valgrind if there is an inherent error with the logic in the code
@@ -37,5 +52,50 @@ jobs:
 
     - name: Run Gtests via Valgrind
       working-directory: ${{github.workspace}}/build
-      run: 
-        valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./allocatortest 
+      run: valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./allocatortest 
+
+  # Generate .deb package
+  GenPackage:
+    runs-on: ubuntu-latest
+    needs: Build
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+
+    - name: Create .deb package
+      working-directory: ${{github.workspace}}/build
+      run: Cpack -G DEB
+
+    - name: Upload .deb package
+      uses: actions/upload-artifact@v4
+      with:
+        name: MemoryAllocatorDEB
+        path: ${{ github.workspace }}/build/memoryallocator-*.deb
+
+  runDebPackage:
+    runs-on: ubuntu-latest
+    needs: GenPackage
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: MemoryAllocatorDEB
+
+    - name: Install .deb package
+      run:
+        sudo apt-get install -y .${{github.workspace}}/memoryallocator-*
+      
+    - name: Verify installtion
+      run:
+        dpkg -l | grep memoryallocator
+
+    - name: Run .dep package
+      run:
+        ./Runner
+
