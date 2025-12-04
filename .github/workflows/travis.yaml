@@ -43,6 +43,9 @@ jobs:
       with:
         name: build-output
         path: ${{github.workspace}}/build
+      # Set execution perms
+      run:
+        chmod +x ${{github.workspace}}/build/allocatortest
 
     - name: Run Gtests
       working-directory: ${{github.workspace}}/build
@@ -70,7 +73,7 @@ jobs:
 
     - name: Create .deb package
       working-directory: ${{github.workspace}}/build
-      run: Cpack -G DEB
+      run: cpack -G DEB
 
     - name: Upload .deb package
       uses: actions/upload-artifact@v4
@@ -92,13 +95,14 @@ jobs:
 
     - name: Install .deb package
       run:
-        sudo apt-get install -y .${{github.workspace}}/memoryallocator-*
+        sudo apt install .${{github.workspace}}/memoryallocator-*
       
     - name: Verify installtion
       run:
         dpkg -l | grep memoryallocator
 
-    - name: Run .dep package
-      run:
-        ./Runner
+    # The test app has been made but wont be implemented here just yet
+    #- name: Run .dep package
+    #  run:
+    #    ./Runner
 
