@@ -44,12 +44,14 @@ jobs:
         name: build-output
         path: ${{github.workspace}}/build
 
+    - name: Rebuild to enable Tests
+      run: cmake -S . -B build -DEnableTests=ON # Rebuild to enable tests
+
     - name: Set test execution perms
       run: chmod +x ${{github.workspace}}/build/allocatortest
 
     - name: Run Gtests
       working-directory: ${{github.workspace}}/build
-      run: cmake -S . -B build -EnableTests=ON # Rebuild to enable tests
       run: ctest --output-on-failure # Dont want to run the length valgrind if there is an inherent error with the logic in the code
     
     - name: Install Valgrind
