@@ -49,6 +49,7 @@ jobs:
 
     - name: Run Gtests
       working-directory: ${{github.workspace}}/build
+      run: cmake -S . -B build -EnableTests=ON # Rebuild to enable tests
       run: ctest --output-on-failure # Dont want to run the length valgrind if there is an inherent error with the logic in the code
     
     - name: Install Valgrind
