@@ -43,9 +43,9 @@ jobs:
       with:
         name: build-output
         path: ${{github.workspace}}/build
-      # Set execution perms
-      run:
-        chmod +x ${{github.workspace}}/build/allocatortest
+
+    - name: Set test execution perms
+      run: chmod +x ${{github.workspace}}/build/allocatortest
 
     - name: Run Gtests
       working-directory: ${{github.workspace}}/build
