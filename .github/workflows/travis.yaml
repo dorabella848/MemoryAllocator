@@ -47,7 +47,7 @@ jobs:
     - name: Rebuild to enable Tests
       run: |
         cmake -S ${{github.workspace}}/MemoryAllocator . -B build -DEnableTests=ON
-        make 
+        make -C ${{github.workspace}}/build
 
     - name: Set test execution perms
       run: chmod +x ${{github.workspace}}/build/allocatortest
