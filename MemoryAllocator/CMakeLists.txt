@@ -13,57 +13,11 @@ if(EnGLCOV)
 endif()
 
 project(memoryallocator LANGUAGES CXX)
+# Search for google tests on the computer, if it doesn't exist then check if the build config
+# allows for git fetch to auto retrieve the files (this is for conveniency and can't be used for .deb
+# packaging due to install rules)
+# Users installing via a .deb package will have to have gtests already installed to build unit tests
 
-
-if(EnableTests)
-    enable_testing()
-    include(FetchContent)
-    # Get gtest lib
-    FetchContent_Declare(
-    googletest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG v1.17.0
-    GIT_SHALLOW TRUE
-    )
-    FetchContent_MakeAvailable(googletest)
-    include(GoogleTest) # for gtest_discover_tests
-endif()
-
-if(EnableBenchmarks)
-    # Get GBenchmark lib
-    set(BENCHMARK_ENABLE_REGEX OFF)
-    set(BENCHMARK_ENABLE_TESTING OFF)
-    FetchContent_Declare(
-    benchmark
-    GIT_REPOSITORY https://github.com/google/benchmark.git
-    GIT_TAG main
-    )
-    FetchContent_MakeAvailable(benchmark)
-endif()
-
-add_library(memoryallocator STATIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Allocator.cpp
-)
-target_include_directories(memoryallocator PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/
-)
-
-# Try and find the google benchmark package, if it isn't found don't create the allocatorbenchmark exe
-find_package(benchmark QUIET)
-if(benchmark_FOUND)
-    add_executable(allocatorbenchmark ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/allocatorBenchmark.cpp)
-    target_include_directories(allocatorbenchmark PRIVATE 
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    target_link_libraries(allocatorbenchmark PRIVATE
-        benchmark
-        benchmark_main
-        memoryallocator
-    )
-endif()
-
-# Try and find the google test package, if it isn't found don't create the allocatortest exe
-find_package(GTest QUIET)
 if(GTest_FOUND)
     add_executable(allocatortest ${CMAKE_CURRENT_SOURCE_DIR}/tests/allocatortest.cpp)
     target_include_directories(allocatortest PRIVATE 
@@ -75,7 +29,75 @@ if(GTest_FOUND)
         memoryallocator
     )
     gtest_discover_tests(allocatortest)
+
+elseif(EnableTests)
+    enable_testing()
+    include(FetchContent)
+    # Get gtest lib
+    FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG v1.17.0
+    GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(googletest)
+    include(GoogleTest) # for gtest_discover_tests
+
+    add_executable(allocatortest ${CMAKE_CURRENT_SOURCE_DIR}/tests/allocatortest.cpp)
+    target_include_directories(allocatortest PRIVATE 
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(allocatortest PRIVATE
+        gtest
+        gtest_main
+        memoryallocator
+    )
+    gtest_discover_tests(allocatortest)
+
 endif()
+
+# Search for google benchmarks on the computer, if it doesn't exist then check if the build config
+# allows for git fetch to auto retrieve the files (this is for conveniency and can't be used for .deb
+# packaging due to install rules)
+if(benchmark_FOUND)
+    add_executable(allocatorbenchmark ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/allocatorBenchmark.cpp)
+    target_include_directories(allocatorbenchmark PRIVATE 
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(allocatorbenchmark PRIVATE
+        benchmark
+        benchmark_main
+        memoryallocator
+    )
+
+elseif(EnableBenchmarks)
+    # Get GBenchmark lib
+    set(BENCHMARK_ENABLE_REGEX OFF)
+    set(BENCHMARK_ENABLE_TESTING OFF)
+    FetchContent_Declare(
+    benchmark
+    GIT_REPOSITORY https://github.com/google/benchmark.git
+    GIT_TAG main
+    )
+    FetchContent_MakeAvailable(benchmark)
+
+    add_executable(allocatorbenchmark ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/allocatorBenchmark.cpp)
+    target_include_directories(allocatorbenchmark PRIVATE 
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(allocatorbenchmark PRIVATE
+        benchmark
+        benchmark_main
+        memoryallocator
+    )
+endif()
+
+add_library(memoryallocator STATIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Allocator.cpp
+)
+target_include_directories(memoryallocator PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/
+)
 
 add_executable(Runner ${CMAKE_CURRENT_SOURCE_DIR}/examples/AllocatorRunner.cpp)
 target_include_directories(Runner PRIVATE 
@@ -84,7 +106,6 @@ target_include_directories(Runner PRIVATE
 target_link_libraries(Runner PRIVATE 
     memoryallocator
 )
-
 
 install(TARGETS memoryallocator
         LIBRARY DESTINATION lib

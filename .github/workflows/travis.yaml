@@ -16,6 +16,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Get Gtests
+      run: 
+      
     - name: Build with tests
       run: |
         cmake -S ${{github.workspace}}/MemoryAllocator . -B ${{github.workspace}}/build -DEnableTests=ON
@@ -40,7 +43,7 @@ jobs:
 
     - name: Build
       run: |
-        cmake -S ${{github.workspace}}/MemoryAllocator . -B ${{github.workspace}}/build -DEnableTests=ON
+        cmake -S ${{github.workspace}}/MemoryAllocator . -B ${{github.workspace}}/build
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
