@@ -9,3 +9,4 @@ coverage_html/
 coverage-report/
 _deps/
 CMakeFiles/
+benchmark/
