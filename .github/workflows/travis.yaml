@@ -64,11 +64,12 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: MemoryAllocatorDEB
-        path: ${{ github.workspace }}/build/memoryallocator-*.deb
+        path: build
+
 
     - name: Install .deb package
       run:
-        sudo dpkg -i /home/runner/work/MemoryAllocator/MemoryAllocator/memoryallocator-*.deb
+        sudo dpkg -i build/memoryallocator-*.deb
       
     - name: Verify installtion
       run:
