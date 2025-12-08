@@ -18,7 +18,7 @@ jobs:
 
     - name: Get Gtests
       run: 
-      
+
     - name: Build with tests
       run: |
         cmake -S ${{github.workspace}}/MemoryAllocator . -B ${{github.workspace}}/build -DEnableTests=ON
@@ -35,44 +35,24 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./allocatortest
 
-  # Build the MemoryAllocator Project
-  Build: 
+  # Generate .deb package
+  GenPackage:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
 
     - name: Build
-      run: |
-        cmake -S ${{github.workspace}}/MemoryAllocator . -B ${{github.workspace}}/build
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-output
-        path: ${{github.workspace}}/build 
-
-  # Generate .deb package
-  GenPackage:
-    runs-on: ubuntu-latest
-    needs: Build
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: build-output
-        path: ${{github.workspace}}/build
+      run: cmake -S ${{github.workspace}}/MemoryAllocator . -B ${{github.workspace}}/build
 
     - name: Create .deb package
-      working-directory: ${{github.workspace}}/build
+      working-directory: build
       run: cpack -G DEB
 
     - name: Upload .deb package
       uses: actions/upload-artifact@v4
       with:
         name: MemoryAllocatorDEB
-        path: ${{ github.workspace }}/build/memoryallocator-*.deb
+        path: build/*.deb
 
   runDebPackage:
     runs-on: ubuntu-latest

@@ -130,7 +130,6 @@ set(CPACK_PACKAGE_NAME "memoryallocator")
 set(CPACK_PACKAGE_VERSION "0.1.0")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Intern Dev tim.vasenkov@gmail.com")
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6, libstdc++6")
-set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "libgtest-dev")
 set(CPACK_DEBIAN_PACKAGE_RELEASE 1)
 
 include(CPack)
