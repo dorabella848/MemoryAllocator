@@ -16,7 +16,7 @@ project(memoryallocator LANGUAGES CXX)
 
 
 if(EnableTests)
-enable_testing()
+    enable_testing()
     include(FetchContent)
     # Get gtest lib
     FetchContent_Declare(

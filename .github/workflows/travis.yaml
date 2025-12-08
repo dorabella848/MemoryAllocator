@@ -18,7 +18,7 @@ jobs:
 
     - name: Build with tests
       run: |
-        cmake -S ${{github.workspace}}/MemoryAllocator . -B build -DEnableTests=ON
+        cmake -S ${{github.workspace}}/MemoryAllocator . -B ${{github.workspace}}/build -DEnableTests=ON
         make -C ${{github.workspace}}/build
 
     - name: Run Gtests
@@ -38,14 +38,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Create build directory
-      run: mkdir -p ${{github.workspace}}/build
-
-    - name: Configure CMake
-      run: cmake -S ${{github.workspace}}/MemoryAllocator -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-
-    - name: Build project
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+    - name: Build
+      run: |
+        cmake -S ${{github.workspace}}/MemoryAllocator . -B ${{github.workspace}}/build -DEnableTests=ON
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
