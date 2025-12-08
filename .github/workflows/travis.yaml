@@ -10,6 +10,28 @@ env:
   BUILD_TYPE: Release
 
 jobs:
+  # Run the unit tests via ctest and valgrind
+  Test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build with tests
+      run: |
+        cmake -S ${{github.workspace}}/MemoryAllocator . -B build -DEnableTests=ON
+        make -C ${{github.workspace}}/build
+
+    - name: Run Gtests
+      working-directory: ${{github.workspace}}/build
+      run: ctest --output-on-failure # Dont want to run the length valgrind if there is an inherent error with the logic in the code
+    
+    - name: Install Valgrind
+      run: sudo apt-get update && sudo apt-get install -y valgrind
+
+    - name: Run Gtests via Valgrind
+      working-directory: ${{github.workspace}}/build
+      run: valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./allocatortest
+
   # Build the MemoryAllocator Project
   Build: 
     runs-on: ubuntu-latest
@@ -29,39 +51,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: build-output
-        path: ${{github.workspace}}/build
-
-  # Run the unit tests via ctest and valgrind
-  Test:
-    runs-on: ubuntu-latest
-    needs: Build
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: build-output
-        path: ${{github.workspace}}/build
-
-    - name: Rebuild to enable Tests
-      run: |
-        cmake -S ${{github.workspace}}/MemoryAllocator . -B build -DEnableTests=ON
-        make -C ${{github.workspace}}/build
-
-    - name: Set test execution perms
-      run: chmod +x ${{github.workspace}}/build/allocatortest
-
-    - name: Run Gtests
-      working-directory: ${{github.workspace}}/build
-      run: ctest --output-on-failure # Dont want to run the length valgrind if there is an inherent error with the logic in the code
-    
-    - name: Install Valgrind
-      run: sudo apt-get update && sudo apt-get install -y valgrind
-
-    - name: Run Gtests via Valgrind
-      working-directory: ${{github.workspace}}/build
-      run: valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./allocatortest 
+        path: ${{github.workspace}}/build 
 
   # Generate .deb package
   GenPackage:
@@ -100,7 +90,7 @@ jobs:
 
     - name: Install .deb package
       run:
-        sudo apt install ${{github.workspace}}/memoryallocator-*
+        sudo dpkg -i /home/runner/work/MemoryAllocator/MemoryAllocator/memoryallocator-*.deb
       
     - name: Verify installtion
       run:
