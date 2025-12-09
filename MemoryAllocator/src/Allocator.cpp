@@ -327,7 +327,7 @@ void Allocator<T>::free(T* ptr){
 }
 template <typename T>
 T* Allocator<T>::calloc(size_t number, size_t size){
-    void* arr = (Allocator::malloc(number*size));
+    T* arr = (this->malloc(number*size));
     memset(arr, 0, number*size);
     return arr;
 }
@@ -412,8 +412,8 @@ T* Allocator<T>::realloc(T* ptr, size_t size){
         int dataSize = min(target->chunkSize, size);
         uint8_t* savedData = new uint8_t[dataSize]; // Have to use dynamic allocaiton since min() is processed at runtime
         memcpy(savedData, ptr, dataSize);
-        Allocator::free(target->startLoc);
-        void* newBlock = malloc(size);
+        this->free(target->startLoc);
+        T* newBlock = this->malloc(size);
         if (newBlock == nullptr){
             return nullptr;
         }
