@@ -8,7 +8,9 @@
 using namespace std;
 
 // Ctor
-Allocator::Allocator(size_t numBytes){
+template <typename T>
+Allocator<T>::Allocator(const T& v, size_t numBytes){
+    value = v;
     memorySize = numBytes;
     freeMemory = numBytes;
     memoryPool = new uint8_t[memorySize];
@@ -16,7 +18,8 @@ Allocator::Allocator(size_t numBytes){
     (*freeHead).startLoc = &memoryPool[0];
 };
 // Dtor
-Allocator::~Allocator(){
+template <typename T>
+Allocator<T>::~Allocator(){
     delete[] memoryPool;
     // Delete all free and occupied chunks
     Chunk* currentChunk = nullptr;
@@ -49,23 +52,28 @@ Allocator::~Allocator(){
     }
 }
 
-
-Chunk* Allocator::getFreeHead(){
+template <typename T>
+Chunk* Allocator<T>::getFreeHead(){
     return freeHead;
 }
-Chunk* Allocator::getOccHead(){
+template <typename T>
+Chunk* Allocator<T>::getOccHead(){
     return occHead;
 }
-int Allocator::getFreeMemory(){
+template <typename T>
+int Allocator<T>::getFreeMemory(){
     return freeMemory;
 }
-int Allocator::getMemoryTotal(){
+template <typename T>
+int Allocator<T>::getMemoryTotal(){
     return memorySize;
 }
-void* Allocator::getMemAddress(size_t index){
+template <typename T>
+T* Allocator<T>::getMemAddress(size_t index){
     return &memoryPool[index];
 }
-void Allocator::printChunks(){
+template <typename T>
+void Allocator<T>::printChunks(){
     cout << "\nTotal Memory: " << memorySize << endl;
     switch(occHead != nullptr){
         case true: cout << "occHead: " << occHead->startLoc << endl; break;
@@ -109,8 +117,8 @@ void Allocator::printChunks(){
     }
     cout << "ENDOFMEMORY" << endl;
 };
-
-void* Allocator::malloc(size_t size)
+template <typename T>
+T* Allocator<T>::malloc(size_t size)
 {
     // Search through the free list and determine if there is a large enough free block to house the new occupied chunk
     // if there is enough free storage in the memory pool but no properly sized free block call defragment() (to be implemented)
@@ -209,8 +217,8 @@ void* Allocator::malloc(size_t size)
     return (newChunk->startLoc);
 
 }
-
-void Allocator::free(void* ptr){
+template <typename T>
+void Allocator<T>::free(T* ptr){
     // Search through occupied memory list  and see if ptr exists
     // Remove the chunk associated with ptr from the occupied list (account for if it is the occHead)
     // Check the freestaet of adjacent chunks and merge them to the left-most free chunk
@@ -317,14 +325,14 @@ void Allocator::free(void* ptr){
     }
     prevFreeChunk->next = newFree;
 }
-
-void* Allocator::calloc(size_t number, size_t size){
+template <typename T>
+T* Allocator<T>::calloc(size_t number, size_t size){
     void* arr = (Allocator::malloc(number*size));
     memset(arr, 0, number*size);
     return arr;
 }
-
-void* Allocator::realloc(void* ptr, size_t size){
+template <typename T>
+T* Allocator<T>::realloc(T* ptr, size_t size){
     Chunk* target = occHead;
     if (size == 0){
         return nullptr;

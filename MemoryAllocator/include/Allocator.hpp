@@ -2,7 +2,9 @@
 #include <cstdint>
 struct Chunk;
 
+template <typename T>
 class Allocator {
+    T value;
     private:
         int memorySize;
         int freeMemory;
@@ -11,16 +13,16 @@ class Allocator {
         Chunk* freeHead = nullptr;
         
     public:
-        Allocator(std::size_t numBytes);
+        Allocator(const T& value, std::size_t numBytes);
         ~Allocator();
         Chunk* getFreeHead();
         Chunk* getOccHead();
         int getFreeMemory();
         int getMemoryTotal();
-        void* getMemAddress(std::size_t index);
+        T* getMemAddress(std::size_t index);
         void printChunks();
-        void* malloc(std::size_t size);
-        void free(void* ptr);
-        void* calloc(std::size_t number, std::size_t size);
-        void* realloc(void* ptr, std::size_t size);
+        T* malloc(std::size_t size);
+        void free(T* ptr);
+        T* calloc(std::size_t number, std::size_t size);
+        T* realloc(T* ptr, std::size_t size);
 };
