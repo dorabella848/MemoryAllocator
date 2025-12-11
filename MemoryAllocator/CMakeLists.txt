@@ -14,10 +14,8 @@ set(BENCHMARK_ENABLE_TESTING OFF)
 project(MemoryAllocator LANGUAGES CXX)
 
 enable_testing()
-add_library(MemoryAllocator STATIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Allocator.cpp
-)
-target_include_directories(MemoryAllocator PUBLIC
+add_library(MemoryAllocator INTERFACE)
+target_include_directories(MemoryAllocator INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/include/
 )
 
