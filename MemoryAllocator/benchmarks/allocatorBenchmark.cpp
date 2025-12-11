@@ -59,31 +59,30 @@ static void Free_Complexity(benchmark::State& state){
 //                                posToBeFreed
 BENCHMARK(Free_Complexity)->Range(1, 1 << 24)->Complexity();
 
-static void Free_Alternating(benchmark::State& state){
+// Evaluates the free complexity when the free block occurs two blocks before the block being freed
+static void Free_Near(benchmark::State& state){
     Allocator alloc(INT32_MAX);
     void* finalChunk = nullptr;
-    std::vector<void*> chunklist;
+    void* tobeFreed = nullptr;
     for(int i = 0; i < state.range(0); i++){
         finalChunk = alloc.malloc(1); // Max num bytes needed is 2^16
-        if(i%2){
-            chunklist.push_back(finalChunk);
+        if(i == state.range(0)-2){
+            tobeFreed = finalChunk;
         }
     }
-    for (void* ptr : chunklist){
-        alloc.free(ptr);
-    }
+    alloc.free(tobeFreed);
 
     for (auto _ : state) {
         alloc.free(finalChunk);
 
         state.PauseTiming();
-        finalChunk = alloc.malloc(2); // undo free for next test
+        finalChunk = alloc.malloc(1); // undo free for next test
         state.ResumeTiming();
     }
     state.SetComplexityN(state.range(0));
 }
 //                                posToBeFreed
-BENCHMARK(Free_Alternating)->Range(1, 1 << 24)->Complexity();
+BENCHMARK(Free_Near)->Range(1, 1 << 24)->Complexity();
 
 // Test when reallocating a chunk to a larger chunksize
 static void ReallocMore_Complexity(benchmark::State& state){
