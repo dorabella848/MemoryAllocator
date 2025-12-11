@@ -56,10 +56,10 @@ Chunk* Allocator::getFreeHead(){
 Chunk* Allocator::getOccHead(){
     return occHead;
 }
-int Allocator::getFreeMemory(){
+size_t Allocator::getFreeMemory(){
     return freeMemory;
 }
-int Allocator::getMemoryTotal(){
+size_t Allocator::getMemoryTotal(){
     return memorySize;
 }
 void* Allocator::getMemAddress(size_t index){
