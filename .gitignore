@@ -10,3 +10,4 @@ coverage-report/
 _deps/
 CMakeFiles/
 benchmark/
+AllocatorRunner/

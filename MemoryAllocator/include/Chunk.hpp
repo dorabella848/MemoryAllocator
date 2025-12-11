@@ -1,8 +1,8 @@
 #include <cstddef>
-
+template <typename T>
 struct Chunk {
     int startIndex;
-    void* startLoc;
+    T* startLoc;
     std::size_t chunkSize;
     bool Free;
     // Next free/occupied chunk dependent on current free state
