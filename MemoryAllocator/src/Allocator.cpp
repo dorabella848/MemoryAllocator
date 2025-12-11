@@ -223,12 +223,16 @@ void Allocator::free(void* ptr){
     // or it has a larger start index than newChunk
     // We can then use this found free chunk to update next and prev
     Chunk* newFree = occHead;
+    Chunk* prevFreeChunk = nullptr;
     // keep track of previous occupied chunk so there is no need to maintain a prev variable
     //Chunk* prevOccChunk = nullptr;
     
     while(newFree != nullptr){
         if(newFree->startLoc == ptr){
             break;
+        }
+        else if(newFree->Free){ // Track most recent free chunk to make it easier to insert into free list
+            prevFreeChunk = newFree;
         }
         newFree = newFree->AbsNext;
     }
@@ -303,11 +307,6 @@ void Allocator::free(void* ptr){
         freeHead->prev = newFree;
         freeHead = newFree;
         return;
-    }
-
-    Chunk* prevFreeChunk = freeHead;
-    while(prevFreeChunk->next != nullptr && prevFreeChunk->next->startIndex < newFree->startIndex){
-        prevFreeChunk = prevFreeChunk->next;
     }
 
     newFree->next = prevFreeChunk->next;
