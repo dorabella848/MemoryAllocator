@@ -39,26 +39,6 @@ static void Malloc_Performance(benchmark::State& state){
 }
 BENCHMARK(Malloc_Performance)->Iterations(1000*1000)->Complexity();
 
-// Allocate posToBeFreed number of chunks of size BlockSize and attempt to free the final chunk
-static void Free_Complexity_Size(benchmark::State& state){
-    Allocator alloc(INT32_MAX);
-    void* finalChunk = nullptr;
-    for(int i = 0; i < state.range(1); i++){
-        finalChunk = alloc.malloc(state.range(0)); // Max num bytes needed is 2^12 * 2^4 = 2^16
-    }
-
-    for (auto _ : state) {
-        alloc.free(finalChunk);
-
-        state.PauseTiming();
-        finalChunk = alloc.malloc(state.range(0)); // undo free for next test
-        state.ResumeTiming();
-    }
-    state.SetComplexityN(state.range(1));
-}
-//                                  BlockSize     posToBeFreed
-BENCHMARK(Free_Complexity_Size)->Ranges({{1, 1 << 4}, {1, 1 << 12}})->Complexity();
-
 // Allocate state.range(0) number of  chunks and attempt to free the final chunk
 static void Free_Complexity(benchmark::State& state){
     Allocator alloc(INT32_MAX);
@@ -78,6 +58,32 @@ static void Free_Complexity(benchmark::State& state){
 }
 //                                posToBeFreed
 BENCHMARK(Free_Complexity)->Range(1, 1 << 24)->Complexity();
+
+static void Free_Alternating(benchmark::State& state){
+    Allocator alloc(INT32_MAX);
+    void* finalChunk = nullptr;
+    std::vector<void*> chunklist;
+    for(int i = 0; i < state.range(0); i++){
+        finalChunk = alloc.malloc(1); // Max num bytes needed is 2^16
+        if(i%2){
+            chunklist.push_back(finalChunk);
+        }
+    }
+    for (void* ptr : chunklist){
+        alloc.free(ptr);
+    }
+
+    for (auto _ : state) {
+        alloc.free(finalChunk);
+
+        state.PauseTiming();
+        finalChunk = alloc.malloc(2); // undo free for next test
+        state.ResumeTiming();
+    }
+    state.SetComplexityN(state.range(0));
+}
+//                                posToBeFreed
+BENCHMARK(Free_Alternating)->Range(1, 1 << 24)->Complexity();
 
 // Test when reallocating a chunk to a larger chunksize
 static void ReallocMore_Complexity(benchmark::State& state){
