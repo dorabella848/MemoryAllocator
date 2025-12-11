@@ -3,7 +3,7 @@
 struct Chunk;
 
 class Allocator {
-    private:
+    public:
         int memorySize;
         int freeMemory;
         uint8_t* memoryPool;
@@ -23,4 +23,5 @@ class Allocator {
         void free(void* ptr);
         void* calloc(std::size_t number, std::size_t size);
         void* realloc(void* ptr, std::size_t size);
+        Chunk* merge(Chunk* newFree);
 };

@@ -2,6 +2,8 @@
 #include "Allocator.hpp"
 #include "Chunk.hpp"
 #include <cstring>
+#include <memory>
+
 // Continuously create chunks of a varied size, empty the memory pool when there is no free memory left
 static void Malloc_Complexity(benchmark::State& state) {
     auto alloc = std::make_unique<Allocator>(INT32_MAX);
@@ -48,7 +50,7 @@ static void Free_Complexity_Size(benchmark::State& state){
     }
 
     for (auto _ : state) {
-        alloc.free(*finalChunk);
+        alloc.free(finalChunk);
 
         state.PauseTiming();
         finalChunk = alloc.malloc(state.range(0)); // undo free for next test
@@ -68,7 +70,7 @@ static void Free_Complexity(benchmark::State& state){
     }
 
     for (auto _ : state) {
-        alloc.free(*finalChunk);
+        alloc.free(finalChunk);
 
         state.PauseTiming();
         finalChunk = alloc.malloc(1); // undo free for next test
@@ -82,17 +84,17 @@ BENCHMARK(Free_Complexity)->Range(1, 1 << 24)->Complexity();
 // Test when reallocating a chunk to a larger chunksize
 static void ReallocMore_Complexity(benchmark::State& state){
     Allocator alloc(INT32_MAX);
+    void* fragmentationMaker = alloc.malloc(10000);
     void* TestChunk = alloc.malloc(state.range(0));
-
     for (auto _ : state) {
         state.PauseTiming();
-        alloc.free(*fragmentationMaker); // Create fragmentation
+        alloc.free(fragmentationMaker); // Create fragmentation
         state.ResumeTiming();
 
-        TestChunk = alloc.realloc(*TestChunk, state.range(0)*2); // Reallocate to *2 original size
+        TestChunk = alloc.realloc(TestChunk, state.range(0)*2); // Reallocate to *2 original size
 
         state.PauseTiming();
-        alloc.free(*TestChunk);
+        alloc.free(TestChunk);
         fragmentationMaker = alloc.malloc(10000);
         TestChunk = alloc.malloc(state.range(0));
         state.ResumeTiming();
