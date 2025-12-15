@@ -75,6 +75,15 @@ jobs:
       run:
         dpkg -l | grep memoryallocator
 
+    - name: Install Clang
+      run: sudo apt-get update && sudo apt-get install -y clang
+
+    - name: Test package
+      run: |
+        echo -e '#include <Allocator.hpp>\nint main() { Allocator alloc(1); alloc.malloc(1); alloc.free(1); return 0; }' > test.cpp 
+        clang -lMemoryAllocator test.cpp -o test
+        ./test
+
     # The test app has been made but wont be implemented here just yet
     #- name: Run .dep package
     #  run:
