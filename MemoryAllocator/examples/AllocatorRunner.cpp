@@ -3,23 +3,14 @@
 #include <vector>
 int main()
 {
-
-  Allocator<int> alloc(8096);
-  int* chunk = alloc.allocate(10);
-  chunk = (int*)alloc.reallocate(alloc.getOccHead()->startLoc, 0);
-
+  Allocator<int> alloc(10);
+  int* test1 = alloc.allocate(1);
+  int* test2 = alloc.allocate(2);
+  int* test3 = alloc.allocate(3);
+  int* test4 = alloc.allocate(4);
+  alloc.deallocate(test3);
+  //alloc.deallocate(test2);
   alloc.printChunks();
-  
-  
-  std::vector<int> vec1 = {10,20,30};
-  for (auto x: vec1) std::cout << x << " ";
-  std::cout << '\n';
 
-  // explicitly using custom allocator
-  std::vector<int, Allocator<int>> vec2 = {10,20,30};
-  for (auto x: vec2) std::cout << x << " ";
-  std::cout << '\n';
-
-  return 0;
 
 };

@@ -11,8 +11,8 @@
 template <typename T>
 class Allocator {
     private:
-        int memorySize;
-        int freeMemory;
+        std::size_t memorySize;
+        std::size_t freeMemory;
         uint8_t* memoryPool;
         Chunk<T>* occHead = nullptr;
         Chunk<T>* freeHead = nullptr;

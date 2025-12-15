@@ -1,0 +1,14 @@
+#include <Allocator.hpp>
+
+int main(){
+    Allocator alloc(8192);
+    int** test1 = (int**)alloc.malloc(5);
+    int** test2 = (int**)alloc.malloc(11);
+    int** test3 = (int**)alloc.malloc(16);
+    int** test4 = (int**)alloc.malloc(27);
+    int** test5 = (int**)alloc.malloc(43);
+    alloc.free(*test2);
+    alloc.free(*test4);
+    alloc.printChunks();
+
+}
