@@ -56,10 +56,10 @@ Chunk* Allocator::getFreeHead(){
 Chunk* Allocator::getOccHead(){
     return occHead;
 }
-int Allocator::getFreeMemory(){
+size_t Allocator::getFreeMemory(){
     return freeMemory;
 }
-int Allocator::getMemoryTotal(){
+size_t Allocator::getMemoryTotal(){
     return memorySize;
 }
 void* Allocator::getMemAddress(size_t index){
@@ -110,7 +110,7 @@ void Allocator::printChunks(){
     cout << "ENDOFMEMORY" << endl;
 };
 
-void** Allocator::malloc(size_t size)
+void* Allocator::malloc(size_t size)
 {
     // Search through the free list and determine if there is a large enough free block to house the new occupied chunk
     // if there is enough free storage in the memory pool but no properly sized free block call defragment() (to be implemented)
@@ -206,7 +206,7 @@ void** Allocator::malloc(size_t size)
     // Update freeMemory tracker
     freeMemory -= size;
 
-    return &(newChunk->startLoc);
+    return (newChunk->startLoc);
 
 }
 
@@ -318,13 +318,13 @@ void Allocator::free(void* ptr){
     prevFreeChunk->next = newFree;
 }
 
-void** Allocator::calloc(size_t number, size_t size){
-    void** arr = (this->malloc(number*size));
-    memset(*arr, 0, number*size);
+void* Allocator::calloc(size_t number, size_t size){
+    void* arr = (Allocator::malloc(number*size));
+    memset(arr, 0, number*size);
     return arr;
 }
 
-void** Allocator::realloc(void* ptr, size_t size){
+void* Allocator::realloc(void* ptr, size_t size){
     Chunk* target = occHead;
     if (size == 0){
         return nullptr;
@@ -400,64 +400,18 @@ void** Allocator::realloc(void* ptr, size_t size){
         return &(target->startLoc);
     }
     else {
-        // Implement the code that will check if theres free memory ahead of the chunk and see 
-        // if there is any need to generate a new chunk rather than updating the old one
-
-        // Maybe implement the code to see if it would be faster to move the chunks ahead of the target
-        // rather than move the target itself 
-        // (this may be the case whenever the extra needed space required to perform the reallocation in place
-        // is less than the main chunk itself I.e moving the data of a 50 byte chunk would be easier than
-        // a one million byte chunk)
-        if(target->AbsNext->Free && (target->chunkSize + target->AbsNext->chunkSize) >= size){
-            // Remove used space from next free chunk
-            target->AbsNext->chunkSize -= (size - target->chunkSize);
-            // Since this is performed in place we have to manually update freeMemory
-            this->freeMemory -= (size - target->chunkSize);
-
-            // Check if the free chunk used was exhausted
-            Chunk* freeChunk = target->AbsNext;
-            if(freeChunk->chunkSize == 0){
-                target->AbsNext = freeChunk->AbsNext;
-                if(freeChunk->AbsNext != nullptr){
-                    freeChunk->AbsNext->AbsPrev = target;
-                }
-                if(freeChunk->prev != nullptr){
-                    freeChunk->prev->next = freeChunk->next;
-                }
-                if(freeChunk == freeHead){
-                    freeHead = freeChunk->next;
-                    if(freeChunk->next != nullptr){
-                        freeChunk->next->prev = nullptr;
-                    }
-                }
-                else {
-                    if(freeChunk->next != nullptr){
-                        freeChunk->next->prev = freeChunk->prev;
-                    }
-                }
-                delete freeChunk;
-            }
-            else{
-                // if the free block stays, then we have to update its positional pointers (otherwise we end up
-                // deleting the next occupied chunk)
-                target->AbsNext->startIndex += (size - target->chunkSize); 
-                target->AbsNext->startLoc = getMemAddress(target->AbsNext->startIndex);
-            }
-            // Update target itself
-            target->chunkSize = size;
-            return &(target->startLoc);
-
+        // Added min function since we dont want to copy more than necessary
+        int dataSize = min(target->chunkSize, size);
+        uint8_t* savedData = new uint8_t[dataSize]; // Have to use dynamic allocaiton since min() is processed at runtime
+        memcpy(savedData, ptr, dataSize);
+        Allocator::free(target->startLoc);
+        void* newBlock = malloc(size);
+        if (newBlock == nullptr){
+            return nullptr;
         }
-        else{
-            int targetSize = target->chunkSize;
-            this->free(target->startLoc);
-            void** newBlock = this->malloc(size);
-            if(*newBlock == nullptr){
-                return nullptr;
-            }
-            memmove(*newBlock, ptr, targetSize);
-            return newBlock;  
-        }  
+        memcpy(newBlock, savedData, dataSize);
+        delete[] savedData;
+        return newBlock;    
     }
 }
 
