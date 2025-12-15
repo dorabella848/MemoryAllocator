@@ -81,7 +81,7 @@ jobs:
     - name: Test package
       run: |
         echo -e '#include <Allocator.hpp>\nint main() { Allocator alloc(1); void* ptr = alloc.malloc(1); alloc.free(ptr); return 0; }' > test.cpp 
-        clang -lMemoryAllocator test.cpp -o test
+        clang -lmemoryallocator test.cpp -o test
         ./test
 
     # The test app has been made but wont be implemented here just yet
