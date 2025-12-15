@@ -6,7 +6,7 @@ inline Allocator<T>::Allocator()
     freeMemory = memorySize;
     memoryPool = new uint8_t[memorySize];
     freeHead = new Chunk<T>(0, memorySize, true);
-    (*freeHead).startLoc = reinterpret_cast<T*>(&memoryPool[0]);
+    freeHead->startLoc = reinterpret_cast<T*>(&memoryPool[0]);
 };
 
 template <typename T>
@@ -45,7 +45,7 @@ inline Allocator<T>::~Allocator(){
 
 template <typename T>
 inline Allocator<T>::Allocator(std::size_t size){
-    memorySize = size;
+    memorySize = size*sizeof(T);
     freeMemory = memorySize;
     memoryPool = new uint8_t[memorySize];
     freeHead = new Chunk<T>(0, memorySize, true);
@@ -165,14 +165,14 @@ inline T* Allocator<T>::allocate(size_t size){
     }
 
     // No point in checking anything if there isnt theoretically enough space
-    if(freeMemory < size){
-        std::cout << "Allocation failed for pointer of size (" << size  <<"): lack of free memory" << std::endl;
+    if(freeMemory < size*sizeof(T)){
+        std::cout << "Allocation failed for pointer of size (" << size*sizeof(T)  <<"): lack of free memory" << std::endl;
         return nullptr;
     }
 
     Chunk<T>* freeCurrent = freeHead;
     while(freeCurrent != nullptr){
-        if(freeCurrent->chunkSize >= size){
+        if(freeCurrent->chunkSize >= size*sizeof(T)){
             break;
         }
         freeCurrent = freeCurrent->next;
@@ -180,8 +180,7 @@ inline T* Allocator<T>::allocate(size_t size){
     if(freeCurrent == nullptr){
         return nullptr;
     }
-
-    Chunk<T>* newChunk = new Chunk<T>(freeCurrent->startIndex, size, false);
+    Chunk<T>* newChunk = new Chunk<T>(freeCurrent->startIndex, size * sizeof(T), false);
     newChunk->startLoc = reinterpret_cast<T*>(&memoryPool[newChunk->startIndex]);
     freeCurrent->startIndex += newChunk->chunkSize;
     freeCurrent->startLoc = reinterpret_cast<T*>(&memoryPool[freeCurrent->startIndex]);
@@ -235,7 +234,7 @@ inline T* Allocator<T>::allocate(size_t size){
         delete freeCurrent;
     }
     // Update freeMemory tracker
-    freeMemory -= size;
+    freeMemory -= size*sizeof(T);
 
     return (newChunk->startLoc);
 
@@ -327,6 +326,8 @@ inline void Allocator<T>::deallocate(T* ptr){
 
     if(freeHead == nullptr){
         freeHead = newFree;
+        newFree->prev = nullptr;
+        newFree->next = nullptr;
         return;
     }
     if(freeHead->startIndex > newFree->startIndex){
@@ -352,13 +353,13 @@ inline void Allocator<T>::deallocate(T* ptr){
 
 template <typename T>
 inline void Allocator<T>::deallocate(T* p, std::size_t n) {
-    deallocate(p);
+    this->deallocate(p);
 };
 
 template <typename T>
 inline T* Allocator<T>::calloc(size_t number, size_t size){
     T* arr = (this->allocate(number*size));
-    memset(arr, 0, number*size);
+    memset(arr, 0, number*size*sizeof(T));
     return arr;
 };
 
@@ -383,23 +384,23 @@ inline T* Allocator<T>::reallocate(T* ptr, size_t size){
         return nullptr;
     }
     // Check if its even possible to perform the new reallocation
-    if( (size > target->chunkSize) && (freeMemory < size - target->chunkSize) ){
+    if( (size*sizeof(T) > target->chunkSize) && (freeMemory < size*sizeof(T) - target->chunkSize) ){
         std::cout << "Reallocation failed for " << ptr << ": lack of free memory" << std::endl;
         return target->startLoc;
     }
-    if (target->chunkSize >= size){
+    if (target->chunkSize >= size*sizeof(T)){
         // We know the pointers exist so we can update freeMemory
-        freeMemory -= (size - target->chunkSize);
+        freeMemory -= (size*sizeof(T) - target->chunkSize);
         // if there is a free chunk to the right of target there is no need to create a new free chunk
         if(target->AbsNext != nullptr && target->AbsNext->Free){
-            target->AbsNext->chunkSize += target->chunkSize-size;
-            target->AbsNext->startIndex -= target->chunkSize-size;
+            target->AbsNext->chunkSize += target->chunkSize-size*sizeof(T);
+            target->AbsNext->startIndex -= target->chunkSize-size*sizeof(T);
             target->AbsNext->startLoc = reinterpret_cast<T*>(&memoryPool[target->AbsNext->startIndex]);
-            target->chunkSize = size;
+            target->chunkSize = size*sizeof(T);
             return target->startLoc;
         }
         Chunk<T>* newFreeChunk = new Chunk<T>(target->startIndex + target->chunkSize, target->chunkSize-size, true);
-        target->chunkSize = size;
+        target->chunkSize = size*sizeof(T);
         newFreeChunk->startLoc = reinterpret_cast<T*>(&memoryPool[newFreeChunk->startIndex]);
         // insert newFreeChunk into the abs list
         newFreeChunk->AbsPrev = target;
@@ -445,11 +446,11 @@ inline T* Allocator<T>::reallocate(T* ptr, size_t size){
         // (this may be the case whenever the extra needed space required to perform the reallocation in place
         // is less than the main chunk itself I.e moving the data of a 50 byte chunk would be easier than
         // a one million byte chunk)
-        if(target->AbsNext->Free && (target->chunkSize + target->AbsNext->chunkSize) >= size){
+        if(target->AbsNext->Free && (target->chunkSize + target->AbsNext->chunkSize) >= size*sizeof(T)){
             // Remove used space from next free chunk
-            target->AbsNext->chunkSize -= (size - target->chunkSize);
+            target->AbsNext->chunkSize -= (size*sizeof(T) - target->chunkSize);
             // Since this is performed in place we have to manually update freeMemory
-            this->freeMemory -= (size - target->chunkSize);
+            this->freeMemory -= (size*sizeof(T) - target->chunkSize);
 
             // Check if the free chunk used was exhausted
             Chunk<T>* freeChunk = target->AbsNext;
@@ -477,11 +478,11 @@ inline T* Allocator<T>::reallocate(T* ptr, size_t size){
             else{
                 // if the free block stays, then we have to update its positional pointers (otherwise we end up
                 // deleting the next occupied chunk)
-                target->AbsNext->startIndex += (size - target->chunkSize); 
+                target->AbsNext->startIndex += (size*sizeof(T) - target->chunkSize); 
                 target->AbsNext->startLoc = getMemAddress(target->AbsNext->startIndex);
             }
             // Update target itself
-            target->chunkSize = size;
+            target->chunkSize = size*sizeof(T);
             return target->startLoc;
 
         }
