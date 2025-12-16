@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include "STL_Allocator.hpp"
-#include "Chunk.hpp"
+#include "STL_Allocator/STL_Allocator.hpp"
+#include "STL_Allocator/Chunk.hpp"
 #include <random>
 
 // Move build files out of main directory,

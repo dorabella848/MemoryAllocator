@@ -1,6 +1,6 @@
 #include <benchmark/benchmark.h>
-#include "Allocator.hpp"
-#include "Chunk.hpp"
+#include "STL_Allocator/STL_Allocator.hpp"
+#include "STL_Allocator/Chunk.hpp"
 #include <cstring>
 // Continuously create chunks of a varied size, empty the memory pool when there is no free memory left
 static void Malloc_Complexity(benchmark::State& state) {
