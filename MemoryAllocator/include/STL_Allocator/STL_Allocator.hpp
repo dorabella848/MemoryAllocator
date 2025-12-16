@@ -17,13 +17,12 @@ public:
   }
   Chunk* getFreeHead() { return alloc->getFreeHead(); };
   Chunk* getOccHead() { return alloc->getOccHead(); };
-  std::size_t getFreeMemory();
-  std::size_t getMemoryTotal();
+  std::size_t getFreeMemory() { return alloc->getFreeMemory(); };
+  std::size_t getMemoryTotal() { return alloc->getMemoryTotal(); };
   value_type* getMemAddress(std::size_t index){ 
     return static_cast<value_type>(alloc->getMemAddress(index)); 
   };
   void printChunks(){ alloc->printChunks(); };
-  operator Allocator&() { return *alloc; }
 private:
   // basic_string makes a copy of this stl allocator, but we want it share the same 
   // memory pool, so make this a pointer. The default copy ctor will copy the pointer between
