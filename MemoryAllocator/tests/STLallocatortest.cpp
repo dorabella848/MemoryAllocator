@@ -12,21 +12,21 @@
 // ctest
 
 // Test allocating almost all available memory (e.g., 9 out of 10)
-void TestConnections(Allocator& alloc){
+void TestConnections(Chunk* occHead, Chunk* freeHead, std::size_t freeMemory, std::size_t totalMemory){
   // Finding first chunk
   Chunk* currentChunk = nullptr;
-  if(alloc.getOccHead() == nullptr){
-      currentChunk = alloc.getFreeHead();
+  if(occHead == nullptr){
+      currentChunk = freeHead;
   }
-  else if(alloc.getFreeHead() == nullptr){
-      currentChunk = alloc.getOccHead();
+  else if(freeHead == nullptr){
+      currentChunk = occHead;
 
   }
-  else if(alloc.getOccHead()->startIndex == 0){
-      currentChunk = alloc.getOccHead();
+  else if(occHead->startIndex == 0){
+      currentChunk = occHead;
   }
   else{
-      currentChunk = alloc.getFreeHead();
+      currentChunk = occHead;
   }
   // Checking Connections
   size_t totalMem = 0;
@@ -60,8 +60,8 @@ void TestConnections(Allocator& alloc){
     }
     currentChunk = currentChunk->AbsNext;
   }
-  GTEST_ASSERT_EQ(totalFreeMem, alloc.getFreeMemory());
-  GTEST_ASSERT_EQ(totalMem, alloc.getMemoryTotal());
+  GTEST_ASSERT_EQ(totalFreeMem, freeMemory);
+  GTEST_ASSERT_EQ(totalMem, totalMemory);
 }
 
 TEST(AllocatorSTL, STLmalloc){
@@ -72,6 +72,7 @@ TEST(AllocatorSTL, STLmalloc){
   for(int i = 0; i < 100; i++){
     GTEST_ASSERT_EQ(vec.at(i), i);
   }
+  StlAllocator<int> alloc = vec.get_allocator();
 }
 
 TEST(AllocatorSTL, STLtestConnections){
@@ -80,7 +81,7 @@ TEST(AllocatorSTL, STLtestConnections){
   int* ptr = alloc.allocate(5);
   alloc.allocate(5);
   alloc.deallocate(ptr, 0);
-  TestConnections(alloc);
+  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorSTL, NonDefaultConstructor){
@@ -88,7 +89,7 @@ TEST(AllocatorSTL, NonDefaultConstructor){
   alloc.allocate(5);
   alloc.allocate(5);
   GTEST_ASSERT_EQ(alloc.allocate(5), nullptr);
-  TestConnections(alloc);
+  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
 }
 
 int main(int argc, char* argv[])
