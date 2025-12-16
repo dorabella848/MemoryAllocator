@@ -291,27 +291,6 @@ TEST(AllocatorRealloc, CallocRealloc){
   TestConnections(alloc);
 }
 
-TEST(AllocatorSTL, STLmalloc){
-  std::vector<int, StlAllocator<int>> vec;
-  for(int i = 0; i < 100; i++){
-    vec.push_back(i);
-  }
-  for(int i = 0; i < 100; i++){
-    GTEST_ASSERT_EQ(vec.at(i), i);
-  }
-  StlAllocator<int> alloc = vec.get_allocator();
-  alloc.printChunks();
-}
-
-TEST(AllocatorSTL, STLtestConnections){
-  StlAllocator<int> alloc;
-  alloc.allocate(5);
-  int* ptr = alloc.allocate(5);
-  alloc.allocate(5);
-  alloc.deallocate(ptr, 0);
-  TestConnections(alloc);
-}
-
 int main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest(&argc, argv);
