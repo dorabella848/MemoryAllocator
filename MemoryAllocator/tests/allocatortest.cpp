@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "Allocator.hpp"
+#include "STL_Allocator.hpp"
 #include "Chunk.hpp"
 #include <random>
 
@@ -289,6 +289,143 @@ TEST(AllocatorRealloc, CallocRealloc){
     GTEST_ASSERT_EQ(test2[i], i*5);
   }
   TestConnections(alloc);
+}
+
+TEST(STLAllocatorMalloc, MallocValidSize_AlmostFull) {
+  StlAllocator<int> allocator;
+  GTEST_ASSERT_NE(allocator.allocate(10), nullptr);
+  TestConnections(allocator);
+}
+
+// Test allocating the last available chunk of memory
+TEST(StlAllocatorMalloc, MallocValidSize_LastChunk) {
+  StlAllocator<int> allocator;
+  allocator.allocate(9); // Allocate first part
+  GTEST_ASSERT_NE(allocator.allocate(1), nullptr);
+  TestConnections(allocator);
+}
+
+// Test allocating zero bytes
+TEST(StlAllocatorMalloc, MallocZeroBytes) {
+  StlAllocator<int> allocator;
+  GTEST_ASSERT_EQ(allocator.allocate(0), nullptr);
+  TestConnections(allocator);
+}
+
+// Test allocating more memory than available
+TEST(StlAllocatorMalloc, MallocTooMuch) {
+  StlAllocator<int> allocator;
+  GTEST_ASSERT_EQ(allocator.allocate(1025), nullptr);
+  TestConnections(allocator);
+}
+
+TEST(StlAllocatorMalloc, MallocNegative){
+  StlAllocator<int> allocator;
+  GTEST_ASSERT_EQ(allocator.allocate(-1), nullptr);
+  TestConnections(allocator);
+}
+
+TEST(StlAllocatorMalloc, MallocFullPoolSize1Blocks){
+  StlAllocator<int> allocator;
+  for(int i = 0; i < 10; i++){
+    GTEST_ASSERT_NE(allocator.allocate(1), nullptr);
+  }
+  TestConnections(allocator);
+}
+
+TEST(StlAllocatorFree, SingleBlockFreeTest){
+  StlAllocator<int> alloc;
+  int* test1 = (int*)alloc.allocate(11);
+  alloc.deallocate(test1, 0);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->chunkSize, 1024);
+  GTEST_ASSERT_EQ(alloc.getOccHead(), nullptr);
+  TestConnections(alloc);
+}
+
+TEST(StlAllocatorFree, FragmentedFree){
+  StlAllocator<int> alloc;
+  int* test1 = (int*)alloc.allocate(11);
+  int* test2 = (int*)alloc.allocate(22);
+  int* test3 = (int*)alloc.allocate(33);
+  alloc.deallocate(test2, 0);
+  GTEST_ASSERT_EQ(alloc.getOccHead()->next->next, nullptr);
+  GTEST_ASSERT_EQ(alloc.getOccHead()->next->chunkSize, 33*4);
+  TestConnections(alloc);
+}
+TEST(StlAllocatorFree, InformationOverwriteFree){
+  StlAllocator<int> alloc;
+  int* test1 = (int*)alloc.allocate(11);
+  *test1 = 5;
+  alloc.deallocate(test1, 0);
+  int* test2 = (int*)alloc.allocate(22);
+  *test2 = 10;
+  GTEST_ASSERT_EQ(*test2, 10);
+  TestConnections(alloc);
+}
+
+TEST(StlAllocatorFree, FreeChunkAhead){
+  StlAllocator<int> alloc;
+  int* test1 = (int*)alloc.allocate(11);
+  int* test2 = (int*)alloc.allocate(22);
+  int* test3 = (int*)alloc.allocate(32);
+  int* test4 = (int*)alloc.allocate(42);
+  alloc.deallocate(test3, 0);
+  alloc.deallocate(test2, 0);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->startIndex, 11*4);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->chunkSize, 54*4);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->startLoc, test2);
+  TestConnections(alloc);
+}
+
+TEST(StlAllocatorFree, FreeChunkBehind){
+  StlAllocator<int> alloc;
+  int* test1 = (int*)alloc.allocate(11);
+  int* test2 = (int*)alloc.allocate(22);
+  int* test3 = (int*)alloc.allocate(32);
+  int* test4 = (int*)alloc.allocate(42);
+  alloc.deallocate(test2, 0);
+  alloc.deallocate(test3, 0);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->startIndex, 11*4);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->chunkSize, 54*4);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->startLoc, test2);
+  TestConnections(alloc);
+}
+
+TEST(StlAllocatorFree, NoFreeHead){
+  StlAllocator<int> alloc;
+  int* test1 = (int*)alloc.allocate(4);
+  alloc.deallocate(test1, 0);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->startIndex, 0);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->chunkSize, 1024);
+  GTEST_ASSERT_EQ(alloc.getOccHead(), nullptr);
+  TestConnections(alloc);
+}
+
+TEST(StlAllocatorFree, AfterFreeHead_No_Adj_Free){
+  StlAllocator<int> alloc;
+  int* test1 = (int*)alloc.allocate(5);
+  int* test2 = (int*)alloc.allocate(11);
+  int* test3 = (int*)alloc.allocate(16);
+  int* test4 = (int*)alloc.allocate(27);
+  int* test5 = (int*)alloc.allocate(43);
+  alloc.deallocate(test2, 0);
+  alloc.deallocate(test4, 0);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->startLoc, test2);
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->next->startLoc, test4);
+  GTEST_ASSERT_EQ(alloc.getOccHead()->startLoc, test1);
+  TestConnections(alloc);
+}
+
+TEST(AllocatorSTL, STLmalloc){
+  std::vector<int, StlAllocator<int>> vec;
+  for(int i = 0; i < 100; i++){
+    vec.push_back(i);
+  }
+  for(int i = 0; i < 100; i++){
+    GTEST_ASSERT_EQ(vec.at(i), i);
+  }
+  StlAllocator<int> alloc = vec.get_allocator();
+  alloc.printChunks();
 }
 
 int main(int argc, char* argv[])
