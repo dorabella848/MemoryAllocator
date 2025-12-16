@@ -7,8 +7,7 @@ class StlAllocator{
 public:
   using value_type = T;
 
-  StlAllocator() : alloc(std::make_shared<Allocator>(1024)) {}
-
+  explicit StlAllocator(std::size_t Sz = 1024) : alloc(std::make_shared<Allocator>(Sz*sizeof(T))) {}
   value_type* allocate(size_t n) {
     return (value_type*) alloc->malloc(sizeof(value_type) * n);
   }
