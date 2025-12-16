@@ -72,8 +72,6 @@ TEST(AllocatorSTL, STLmalloc){
   for(int i = 0; i < 100; i++){
     GTEST_ASSERT_EQ(vec.at(i), i);
   }
-  StlAllocator<int> alloc = vec.get_allocator();
-  alloc.printChunks();
 }
 
 TEST(AllocatorSTL, STLtestConnections){
@@ -82,6 +80,14 @@ TEST(AllocatorSTL, STLtestConnections){
   int* ptr = alloc.allocate(5);
   alloc.allocate(5);
   alloc.deallocate(ptr, 0);
+  TestConnections(alloc);
+}
+
+TEST(AllocatorSTL, NonDefaultConstructor){
+  StlAllocator<int> alloc(14);
+  alloc.allocate(5);
+  alloc.allocate(5);
+  GTEST_ASSERT_EQ(alloc.allocate(5), nullptr);
   TestConnections(alloc);
 }
 
