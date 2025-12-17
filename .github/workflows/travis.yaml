@@ -80,7 +80,7 @@ jobs:
 
     - name: Test package
       run: |
-        echo -e '#include <Allocator.hpp>\nint main() { Allocator alloc(1); void* ptr = alloc.malloc(1); alloc.free(ptr); return 0; }' > test.cpp 
+        echo -e '#include <STL_Allocator/Allocator.hpp>\nint main() { Allocator alloc(1); void* ptr = alloc.malloc(1); alloc.free(ptr); return 0; }' > test.cpp 
         clang++ test.cpp -lmemoryallocator -o test
         ./test
 
