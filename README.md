@@ -1,5 +1,4 @@
 # MemoryAllocator
-<<<<<<< HEAD
 This document describes the design of the C++ Memory Allocator. It is compliant with, but not dependent on STL.
 
 This document is aimed at the following audiences:
@@ -55,8 +54,4 @@ When memory needs to be defragmented, the defragment() function is called. The f
 ## Limitations
 
 realloc() may have less capabilities in some scenarios due to the discontinued use of double pointers to track and manage chunks in compliance with c++ stl. 
-=======
-A C++ based memory allocator that can allocate memory both statically and dynamically
 
-
->>>>>>> main
