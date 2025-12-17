@@ -34,6 +34,17 @@ if(EnableTests AND NOT CMAKE_CROSSCOMPILING)
         )
         gtest_discover_tests(allocatortest)
 
+        add_executable(STLallocatortest ${CMAKE_CURRENT_SOURCE_DIR}/tests/STLallocatortest.cpp)
+        target_include_directories(STLallocatortest PRIVATE 
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+        target_link_libraries(STLallocatortest PRIVATE
+            gtest
+            gtest_main
+            memoryallocator
+        )
+        gtest_discover_tests(STLallocatortest)
+
     else()
         include(FetchContent)
         # Get gtest lib
@@ -63,7 +74,7 @@ if(EnableTests AND NOT CMAKE_CROSSCOMPILING)
         target_link_libraries(STLallocatortest PRIVATE
             gtest
             gtest_main
-            MemoryAllocator
+            memoryallocator
         )
         gtest_discover_tests(STLallocatortest)
     endif()
