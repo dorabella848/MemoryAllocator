@@ -17,7 +17,7 @@ project(memoryallocator LANGUAGES CXX)
 # allows for git fetch to auto retrieve the files (this is for conveniency and can't be used for .deb
 # packaging due to install rules)
 # Users installing via a .deb package will have to have gtests already installed to build unit tests
-if(EnableTests)
+if(EnableTests AND NOT CMAKE_CROSSCOMPILING)
     enable_testing()
     include(GoogleTest) # for gtest_discover_tests
     find_package(GTest QUIET)
@@ -55,6 +55,17 @@ if(EnableTests)
             memoryallocator
         )
         gtest_discover_tests(allocatortest)
+        
+        add_executable(STLallocatortest ${CMAKE_CURRENT_SOURCE_DIR}/tests/STLallocatortest.cpp)
+        target_include_directories(STLallocatortest PRIVATE 
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+        target_link_libraries(STLallocatortest PRIVATE
+            gtest
+            gtest_main
+            MemoryAllocator
+        )
+        gtest_discover_tests(STLallocatortest)
     endif()
 endif()
 
@@ -123,7 +134,6 @@ install(
 
 install(TARGETS Runner
         RUNTIME DESTINATION bin)
-
 
 set(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_NAME "memoryallocator")

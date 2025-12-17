@@ -8,5 +8,9 @@ mingw-toolchain.cmake
 coverage_html/
 coverage-report/
 _deps/
+<<<<<<< HEAD
+CMakeFiles/
+=======
 CMakeFiles/
 benchmark/
+>>>>>>> main
