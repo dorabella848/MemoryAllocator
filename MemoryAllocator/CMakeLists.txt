@@ -3,9 +3,13 @@ set(GOOGLETEST_VERSION 1.15.2)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage -O0 -g")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage -O0 -g")
 include(FetchContent)
+set(BENCHMARK_ENABLE_REGEX OFF)
+set(BENCHMARK_ENABLE_TESTING OFF)
+
 
 project(MemoryAllocator LANGUAGES CXX)
 
@@ -15,6 +19,24 @@ add_library(MemoryAllocator STATIC
 )
 target_include_directories(MemoryAllocator PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include/
+)
+
+# Benchmark executable
+FetchContent_Declare(
+  benchmark
+  GIT_REPOSITORY https://github.com/google/benchmark.git
+  GIT_TAG main
+)
+FetchContent_MakeAvailable(benchmark)
+
+add_executable(allocatorbenchmark ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/allocatorBenchmark.cpp)
+target_include_directories(allocatorbenchmark PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+target_link_libraries(allocatorbenchmark PRIVATE
+    benchmark
+    benchmark_main
+    MemoryAllocator
 )
 
 FetchContent_Declare(

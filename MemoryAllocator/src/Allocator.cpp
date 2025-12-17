@@ -1,17 +1,66 @@
 #include "Allocator.hpp"
+#include "Chunk.hpp"
 #include <cstdio>
 #include <cmath> 
 #include <cstring>
 #include <iostream>
 #include <stdexcept> // logic_error
-#include <algorithm> // min()
 using namespace std;
+
+// Ctor
+Allocator::Allocator(size_t numBytes){
+    memorySize = numBytes;
+    freeMemory = numBytes;
+    memoryPool = new uint8_t[memorySize];
+    freeHead = new Chunk(0, memorySize, true);
+    (*freeHead).startLoc = &memoryPool[0];
+};
+// Dtor
+Allocator::~Allocator(){
+    delete[] memoryPool;
+    // Delete all free and occupied chunks
+    Chunk* currentChunk = nullptr;
+    if(occHead == nullptr){
+        currentChunk = freeHead;
+    }
+    else if(freeHead == nullptr){
+        currentChunk = occHead;
+
+    }
+    else if(occHead->startIndex == 0){
+        currentChunk = occHead;
+    }
+    else{
+        currentChunk = freeHead;
+    }
+
+    Chunk* occCurrent = occHead;
+    while(currentChunk != nullptr){
+        if(currentChunk->AbsNext != nullptr){
+            currentChunk = currentChunk->AbsNext;
+            delete currentChunk->AbsPrev;
+        }
+        else{
+            delete currentChunk;
+            break;
+        }
+        
+
+    }
+}
+
 
 Chunk* Allocator::getFreeHead(){
     return freeHead;
 }
 Chunk* Allocator::getOccHead(){
     return occHead;
+}
+size_t Allocator::getFreeMemory(){
+    return freeMemory;
+}
+size_t Allocator::getMemoryTotal(){
+    return memorySize;
 }
 void* Allocator::getMemAddress(size_t index){
     return &memoryPool[index];
@@ -61,7 +110,7 @@ void Allocator::printChunks(){
     cout << "ENDOFMEMORY" << endl;
 };
 
-void** Allocator::malloc(size_t size)
+void* Allocator::malloc(size_t size)
 {
     // Search through the free list and determine if there is a large enough free block to house the new occupied chunk
     // if there is enough free storage in the memory pool but no properly sized free block call defragment() (to be implemented)
@@ -98,16 +147,7 @@ void** Allocator::malloc(size_t size)
         freeCurrent = freeCurrent->next;
     }
     if(freeCurrent == nullptr){
-        // If no single free chunk had enough space but we have enough total free memory then fragmentation
-        // is the limitation
-        // This could lead to an inf loop if freeMemory is not properly tracked
-        if(freeMemory > size){
-            defragment();
-            return malloc(size);
-        }
-        else{
-            return nullptr;
-        }
+        return nullptr;
     }
 
     Chunk* newChunk = new Chunk(freeCurrent->startIndex, size, false);
@@ -123,17 +163,23 @@ void** Allocator::malloc(size_t size)
         freeCurrent->AbsPrev = newChunk;
     }
     else{
-        if(freeCurrent->AbsPrev->next != nullptr){
-            freeCurrent->AbsPrev->next->prev = newChunk;
+        if(freeCurrent->AbsPrev != nullptr){
+            // Insert newChunk into the occupied list by using freeCurrent as the reference
+            freeCurrent->AbsPrev->next = newChunk;
+            freeCurrent->AbsPrev->AbsNext = newChunk;
         }
-        // Insert newChunk into the occupied list by using freeCurrent as the reference
-        freeCurrent->AbsPrev->next = newChunk;
-        freeCurrent->AbsPrev->AbsNext = newChunk;
+        if(freeCurrent->AbsNext != nullptr){
+            freeCurrent->AbsNext->prev = newChunk;
+        }
         newChunk->AbsPrev = freeCurrent->AbsPrev;
         newChunk->prev = freeCurrent->AbsPrev;
         freeCurrent->AbsPrev = newChunk;
         newChunk->AbsNext = freeCurrent;
         newChunk->next = freeCurrent->AbsNext;
+        if(freeCurrent->AbsNext == occHead){
+            occHead = newChunk;
+        }
+        
     }
 
     if (freeCurrent->chunkSize == 0){
@@ -160,7 +206,7 @@ void** Allocator::malloc(size_t size)
     // Update freeMemory tracker
     freeMemory -= size;
 
-    return &(newChunk->startLoc);
+    return (newChunk->startLoc);
 
 }
 
@@ -184,7 +230,7 @@ void Allocator::free(void* ptr){
         if(newFree->startLoc == ptr){
             break;
         }
-        newFree = newFree->next;
+        newFree = newFree->AbsNext;
     }
     if(newFree == nullptr){
         return;
@@ -272,73 +318,13 @@ void Allocator::free(void* ptr){
     prevFreeChunk->next = newFree;
 }
 
-void Allocator::defragment(){
-    if(freeMemory <= 0){
-        throw logic_error("Defragment was called when no Free memory exists");
-    }
-    // Go through every freeChunk that is not the last free chunk
-    // and shift all the occupied chunk to the left (add the free chunk's size to the next free chunk)
-    // repeat until all free chunks are moved to the end
-    Chunk* occCurrent = occHead;
-    Chunk* freeCurrent = freeHead;
-    Chunk* prevFreeChunk = nullptr;
-    // The total number of occupied bytes to be moved after each free chunk relocation
-    int totalMove = 0;
-    // The total number of free bytes moved to the final free chunk
-    int totalFree = 0;
-    while(freeCurrent->next != nullptr){
-        
-        void* occStartLoc = nullptr;
-        // totalFree must be tracked because we delete free chunks as we pass over them
-        totalFree += freeCurrent->chunkSize;
-
-        while(occCurrent->startIndex < freeCurrent->startIndex){
-            occCurrent = occCurrent->next;
-        }
-
-        while(occCurrent != nullptr && occCurrent->startIndex < freeCurrent->next->startIndex){
-            // Get the total number of occupied chunks in between two free chunks
-            // to figure out how many bytes to move over into the to be moved free chunk
-            totalMove += occCurrent->chunkSize;
-            if(occStartLoc == nullptr){
-                occStartLoc = occCurrent->startLoc;
-            }
-            occCurrent->startIndex -= freeCurrent->chunkSize;
-            occCurrent->startLoc = &memoryPool[occCurrent->startIndex];
-            occCurrent = occCurrent->next;
-        }
-        // Move the occupied bytes over by the total number of free bytes we have moved to the end
-        memmove(freeCurrent->startLoc, occStartLoc, totalMove);
-        prevFreeChunk = freeCurrent;
-        freeCurrent = freeCurrent->next;
-        if(prevFreeChunk->AbsPrev != nullptr){
-            prevFreeChunk->AbsPrev->AbsNext = prevFreeChunk->AbsNext;
-        }
-        prevFreeChunk->AbsNext->AbsPrev = prevFreeChunk->AbsPrev;
-        delete prevFreeChunk;
-    };
-
-    // Update the final free chunk which is at the end of the memory pool (it's also the freeHead)
-    
-    freeCurrent->startIndex -= totalFree;
-    freeCurrent->chunkSize += totalFree;
-    freeCurrent->startLoc = &memoryPool[freeCurrent->startIndex];
-    freeCurrent->prev = nullptr;
-    freeHead = freeCurrent;
-    
-    if(totalFree == 0 || totalMove == 0){
-        throw logic_error("Fatal error: Defragment was called but nothing was moved");
-    }
-    
-};
-
-void** Allocator::calloc(size_t number, size_t size){
-    void** arr = (Allocator::malloc(number*size));
-    memset(*arr, 0, number*size);
+void* Allocator::calloc(size_t number, size_t size){
+    void* arr = (Allocator::malloc(number*size));
+    memset(arr, 0, number*size);
     return arr;
 }
 
-void** Allocator::realloc(void* ptr, size_t size){
+void* Allocator::realloc(void* ptr, size_t size){
     Chunk* target = occHead;
     if (size == 0){
         return nullptr;
@@ -347,7 +333,7 @@ void** Allocator::realloc(void* ptr, size_t size){
         return nullptr;
     }
     while (target->startLoc != ptr){
-        target = target->next;
+        target = target->AbsNext;
         if (target == ptr){
             break;
         }
@@ -360,10 +346,10 @@ void** Allocator::realloc(void* ptr, size_t size){
         cout << "Reallocation failed for " << ptr << ": lack of free memory" << endl;
         return &(target->startLoc);
     }
-    // We know the pointers exist so we can update freeMemory
-    freeMemory += (target->chunkSize - size);
 
     if (target->chunkSize >= size){
+        // We know the pointers exist so we can update freeMemory
+        freeMemory -= (size - target->chunkSize);
         // if there is a free chunk to the right of target there is no need to create a new free chunk
         if(target->AbsNext != nullptr && target->AbsNext->Free){
             target->AbsNext->chunkSize += target->chunkSize-size;
@@ -419,12 +405,12 @@ void** Allocator::realloc(void* ptr, size_t size){
         uint8_t* savedData = new uint8_t[dataSize]; // Have to use dynamic allocaiton since min() is processed at runtime
         memcpy(savedData, ptr, dataSize);
         Allocator::free(target->startLoc);
-        void** newBlock = malloc(size);
-        if (*newBlock == nullptr){
+        void* newBlock = malloc(size);
+        if (newBlock == nullptr){
             return nullptr;
         }
-        memcpy(*newBlock, savedData, dataSize);
-        delete savedData;
+        memcpy(newBlock, savedData, dataSize);
+        delete[] savedData;
         return newBlock;    
     }
 }
