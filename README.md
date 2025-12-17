@@ -1,5 +1,5 @@
 # MemoryAllocator
-This document describes the design of the C++ Dynamic Memory Allocator. It is compliant with, but not dependent on STL.
+This document describes the design of the C++ Memory Allocator. It is compliant with, but not dependent on STL.
 
 This document is aimed at the following audiences:
  * software engineers
