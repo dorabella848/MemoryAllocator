@@ -13,6 +13,7 @@ struct Chunk {
     Chunk* AbsNext;
     // Absolute previous chunk in the memory pool regardless of current free state
     Chunk* AbsPrev;
+
     
 
     Chunk(int startingIndex, int chunkSize, bool Free) : 
@@ -25,6 +26,6 @@ struct Chunk {
     AbsNext(nullptr),
     AbsPrev(nullptr) {};
     ~Chunk() {
-        
+
     }
 };
