@@ -84,7 +84,6 @@ BENCHMARK(Free_Complexity)->Range(1, 1 << 24)->Complexity();
 // Test when reallocating a chunk to a larger chunksize
 static void ReallocMore_Complexity(benchmark::State& state){
     Allocator alloc(INT32_MAX);
-    void* fragmentationMaker = alloc.malloc(10000);
     void* TestChunk = alloc.malloc(state.range(0));
     void* fragmentationMaker = alloc.malloc(1);
     for (auto _ : state) {
