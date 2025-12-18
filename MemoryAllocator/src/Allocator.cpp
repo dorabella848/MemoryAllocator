@@ -1,5 +1,5 @@
-#include "Allocator.hpp"
-#include "Chunk.hpp"
+#include "STL_Allocator/STL_Allocator.hpp"
+#include "STL_Allocator/Chunk.hpp"
 #include <cstdio>
 #include <cmath> 
 #include <cstring>
@@ -54,10 +54,10 @@ Chunk* Allocator::getFreeHead(){
 Chunk* Allocator::getOccHead(){
     return occHead;
 }
-int Allocator::getFreeMemory(){
+size_t Allocator::getFreeMemory(){
     return freeMemory;
 }
-int Allocator::getMemoryTotal(){
+size_t Allocator::getMemoryTotal(){
     return memorySize;
 }
 void* Allocator::getMemAddress(size_t index){
@@ -356,7 +356,7 @@ void* Allocator::realloc(void* ptr, size_t size){
     // Check if its even possible to perform the new reallocation
     if( (size > target->chunkSize) && (freeMemory < size - target->chunkSize) ){
         cout << "Reallocation failed for " << ptr << ": lack of free memory" << endl;
-        return (target->startLoc);
+        return target->startLoc;
     }
 
     if (target->chunkSize >= size){
@@ -368,7 +368,7 @@ void* Allocator::realloc(void* ptr, size_t size){
             target->AbsNext->startIndex -= target->chunkSize-size;
             target->AbsNext->startLoc = &memoryPool[target->AbsNext->startIndex];
             target->chunkSize = size;
-            return (target->startLoc);
+            return target->startLoc;
         }
 
         Chunk* newFreeChunk = new Chunk(target->startIndex + target->chunkSize, target->chunkSize-size, true);
@@ -387,14 +387,14 @@ void* Allocator::realloc(void* ptr, size_t size){
         // no need to update next and prev if there is no other free chunks
         if(freeHead == nullptr){
             freeHead = newFreeChunk;
-            return (target->startLoc);
+            return target->startLoc;
         }
         if(freeHead->startIndex > newFreeChunk->startIndex){
             newFreeChunk->prev = nullptr;
             newFreeChunk->next = freeHead;
             freeHead->prev = newFreeChunk;
             freeHead = newFreeChunk;
-            return (target->startLoc);
+            return target->startLoc;
         }
         Chunk* prevFreeChunk = freeHead;
         // Logic used from free() to find the closest free chunk
@@ -409,7 +409,7 @@ void* Allocator::realloc(void* ptr, size_t size){
         }
         prevFreeChunk->next = newFreeChunk;
 
-        return (target->startLoc);
+        return target->startLoc;
     }
     else {
         // Added min function since we dont want to copy more than necessary

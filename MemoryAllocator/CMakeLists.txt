@@ -57,6 +57,16 @@ target_link_libraries(allocatortest PRIVATE
     MemoryAllocator
 )
 
+add_executable(STLallocatortest ${CMAKE_CURRENT_SOURCE_DIR}/tests/STLallocatortest.cpp)
+target_include_directories(STLallocatortest PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+target_link_libraries(STLallocatortest PRIVATE
+    gtest
+    gtest_main
+    MemoryAllocator
+)
+
 add_executable(Runner ${CMAKE_CURRENT_SOURCE_DIR}/examples/AllocatorRunner.cpp)
 target_include_directories(Runner PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(Runner PRIVATE MemoryAllocator)
@@ -81,7 +91,7 @@ endif()
 
 include(GoogleTest)
 gtest_discover_tests(allocatortest)
-
+gtest_discover_tests(STLallocatortest)
 #For running gcov and lcov: 
 
 #./allocatortest 

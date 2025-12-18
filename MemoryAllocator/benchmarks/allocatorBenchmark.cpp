@@ -1,6 +1,6 @@
 #include <benchmark/benchmark.h>
-#include "Allocator.hpp"
-#include "Chunk.hpp"
+#include "STL_Allocator/STL_Allocator.hpp"
+#include "STL_Allocator/Chunk.hpp"
 #include <cstring>
 #include <memory>
 
@@ -86,16 +86,13 @@ static void ReallocMore_Complexity(benchmark::State& state){
     Allocator alloc(INT32_MAX);
     void* fragmentationMaker = alloc.malloc(10000);
     void* TestChunk = alloc.malloc(state.range(0));
+    void* fragmentationMaker = alloc.malloc(1);
     for (auto _ : state) {
-        state.PauseTiming();
-        alloc.free(fragmentationMaker); // Create fragmentation
-        state.ResumeTiming();
 
         TestChunk = alloc.realloc(TestChunk, state.range(0)*2); // Reallocate to *2 original size
 
         state.PauseTiming();
         alloc.free(TestChunk);
-        fragmentationMaker = alloc.malloc(10000);
         TestChunk = alloc.malloc(state.range(0));
         state.ResumeTiming();
     }

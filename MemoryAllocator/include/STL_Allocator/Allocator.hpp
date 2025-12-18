@@ -3,9 +3,9 @@
 struct Chunk;
 
 class Allocator {
-    public:
-        int memorySize;
-        int freeMemory;
+    private:
+        std::size_t memorySize;
+        std::size_t freeMemory;
         uint8_t* memoryPool;
         Chunk* occHead = nullptr;
         Chunk* freeHead = nullptr;
@@ -15,8 +15,8 @@ class Allocator {
         ~Allocator();
         Chunk* getFreeHead();
         Chunk* getOccHead();
-        int getFreeMemory();
-        int getMemoryTotal();
+        std::size_t getFreeMemory();
+        std::size_t getMemoryTotal();
         void* getMemAddress(std::size_t index);
         void printChunks();
         void* malloc(std::size_t size);
