@@ -405,15 +405,6 @@ void* Allocator::realloc(void* ptr, size_t size){
     if (target->chunkSize >= size){
         // We know the pointers exist so we can update freeMemory
         freeMemory -= (size - target->chunkSize);
-        // if there is a free chunk to the right of target there is no need to create a new free chunk
-        if(target->AbsNext != nullptr && target->AbsNext->Free){
-            target->AbsNext->chunkSize += target->chunkSize-size;
-            target->AbsNext->startIndex -= target->chunkSize-size;
-            target->AbsNext->startLoc = &memoryPool[target->AbsNext->startIndex];
-            target->chunkSize = size;
-            return target->startLoc;
-        }
-
         Chunk* newFreeChunk = new Chunk(target->startIndex + target->chunkSize, target->chunkSize-size, false);
         newFreeChunk->AbsNext = target->AbsNext;
         newFreeChunk->AbsPrev = target;
