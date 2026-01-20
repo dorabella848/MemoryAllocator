@@ -10,23 +10,19 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  build:
-    # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
-    # You can convert this to a matrix build if you need cross-platform coverage.
-    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+  # Run the unit tests via ctest and valgrind
+  Test:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
 
-    - name: Create build directory
-      run: mkdir -p ${{github.workspace}}/build
+    - name: Get Gtests
+      run: 
 
-    - name: Configure CMake
-      run: cmake -S ${{github.workspace}}/MemoryAllocator -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-
-    - name: Build project
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+    - name: Build with tests
+      run: |
+        cmake -S ${{github.workspace}}/MemoryAllocator . -B ${{github.workspace}}/build -DEnableTests=ON
+        make -C ${{github.workspace}}/build
 
     - name: Run Gtests
       working-directory: ${{github.workspace}}/build
@@ -37,5 +33,59 @@ jobs:
 
     - name: Run Gtests via Valgrind
       working-directory: ${{github.workspace}}/build
-      run: 
-        valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./allocatortest 
+      run: valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./allocatortest
+
+  # Generate .deb package
+  GenPackage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build
+      run: cmake -S ${{github.workspace}}/MemoryAllocator . -B ${{github.workspace}}/build
+
+    - name: Create .deb package
+      working-directory: build
+      run: cpack -G DEB
+
+    - name: Upload .deb package
+      uses: actions/upload-artifact@v4
+      with:
+        name: MemoryAllocatorDEB
+        path: build/*.deb
+
+  runDebPackage:
+    runs-on: ubuntu-latest
+    needs: GenPackage
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: MemoryAllocatorDEB
+        path: build
+
+
+    - name: Install .deb package
+      run:
+        sudo dpkg -i build/memoryallocator-*.deb
+      
+    - name: Verify installtion
+      run:
+        dpkg -l | grep memoryallocator
+
+    - name: Install Clang
+      run: sudo apt-get update && sudo apt-get install -y clang
+
+    - name: Test package
+      run: |
+        echo -e '#include <STL_Allocator/Allocator.hpp>\nint main() { Allocator alloc(1); void* ptr = alloc.malloc(1); alloc.free(ptr); return 0; }' > test.cpp 
+        clang++ test.cpp -lmemoryallocator -o test
+        ./test
+
+    # The test app has been made but wont be implemented here just yet
+    #- name: Run .dep package
+    #  run:
+    #    ./Runner
+
