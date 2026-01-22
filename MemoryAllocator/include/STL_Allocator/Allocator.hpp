@@ -10,13 +10,15 @@ class Allocator {
         Chunk* occHead = nullptr;
         Chunk* freeHead = nullptr;
         Chunk* merge(Chunk* newFree);
-        void insert(Chunk* toInsert);
+        void insert_referece(Chunk *toInsert, Chunk *refChunk);
+        void insert(Chunk *toInsert);
         
     public:
         Allocator(std::size_t numBytes);
         ~Allocator();
         Chunk* getFreeHead();
         Chunk* getOccHead();
+        Chunk* getTrueHead();
         std::size_t getFreeMemory();
         std::size_t getMemoryTotal();
         void* getMemAddress(std::size_t index);
