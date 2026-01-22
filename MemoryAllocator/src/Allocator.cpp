@@ -150,9 +150,14 @@ Chunk* Allocator::merge(Chunk *newFree){
 }
 
 void Allocator::insert(Chunk *toInsert){
-    // Must have the aboslute positions (of newFree) established before running
-    // Do not assign the free value of newFree manually
+    // Must have the aboslute positions (of toInsert) established before running
 
+    // toInsert's free value should be the opposite of the list its trying to be inserted into 
+    // ex: toInsert needs to be inserted into the free list so it is assigned the occupied free state.
+
+    if(toInsert == nullptr){
+        return;
+    }
     // Ensure surrounding ptrs point to toInsert
     if(toInsert->AbsPrev != nullptr){
         toInsert->AbsPrev->AbsNext = toInsert;
@@ -227,12 +232,7 @@ void Allocator::insert(Chunk *toInsert){
     }
     
     // Disconnect newFree from its current freestate list
-    if(toInsert->prev != nullptr){
-        toInsert->prev->next = toInsert->next;
-    }
-    if(toInsert->next != nullptr){
-        toInsert->next->prev = toInsert->prev;
-    }
+    toInsert->orphan();
 
     // Insert newFree via refChunk
     if(refChunk->startIndex < toInsert->startIndex){
