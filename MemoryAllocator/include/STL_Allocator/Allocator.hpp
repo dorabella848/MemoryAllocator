@@ -9,6 +9,8 @@ class Allocator {
         uint8_t* memoryPool;
         Chunk* occHead = nullptr;
         Chunk* freeHead = nullptr;
+        Chunk* merge(Chunk* newFree);
+        void insert(Chunk* toInsert);
         
     public:
         Allocator(std::size_t numBytes);
@@ -23,6 +25,4 @@ class Allocator {
         void free(void* ptr);
         void* calloc(std::size_t number, std::size_t size);
         void* realloc(void* ptr, std::size_t size);
-        Chunk* merge(Chunk* newFree);
-        void insert(Chunk* toInsert);
 };
