@@ -28,14 +28,14 @@ struct Chunk {
 
     void orphan()
     {
-        this->next = nullptr;
-        this->prev = nullptr;
         if(this->prev != nullptr){
             this->prev->next = this->next;
         }
         if(this->next != nullptr){
             this->next->prev = this->prev;
         }
+        this->next = nullptr;
+        this->prev = nullptr;
     }
 
     ~Chunk() {
