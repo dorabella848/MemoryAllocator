@@ -9,8 +9,18 @@ class Allocator {
         uint8_t* memoryPool;
         Chunk* occHead = nullptr;
         Chunk* freeHead = nullptr;
+        /*
+        * returns a free block that is the result of merging any adjacent free blocks
+        */
         Chunk* merge(Chunk* newFree);
+        /*
+        *    Updates the next, prev, and free vars of a chunk
+        *    ref chunk is the closest chunk behind or after toInsert of the opposite type
+        */
         void insert_referece(Chunk *toInsert, Chunk *refChunk);
+        /*
+        *    inserts a chunk into the opposite free type list
+        */
         void insert(Chunk *toInsert);
         
     public:
