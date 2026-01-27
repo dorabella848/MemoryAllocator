@@ -14,14 +14,23 @@ class Allocator {
         */
         Chunk* merge(Chunk* newFree);
         /*
-        *    Updates the next, prev, and free vars of a chunk
-        *    ref chunk is the closest chunk behind or after toInsert of the opposite type
+        * Returns a chunk of the opposite type that is considered "adjacent" when in context
+        * of the opposite type memory pool
+        * 
+        * Returns a nullptr if no opposite type chunk is found
+        * 
+        * This chunk may occur after or before the initialChunk
         */
-        void insert_referece(Chunk *toInsert, Chunk *refChunk);
+        Chunk* findOppReference(Chunk* initialChunk);
         /*
-        *    inserts a chunk into the opposite free type list
+        * Inserts a chunk into the opposite free type list by Updating the next, prev, and free vars of a chunk
+        * 
+        * ref chunk is the closest chunk behind or after toInsert of the opposite type
+        * The intial chunk must at the very least have its absNext and absPrev variables properly assigned
+        * 
+        * No reference chunk is required if the opposite type list is empty
         */
-        void insert(Chunk *toInsert);
+        void insert(Chunk *toInsert, Chunk *refChunk=nullptr);
         
     public:
         Allocator(std::size_t numBytes);
