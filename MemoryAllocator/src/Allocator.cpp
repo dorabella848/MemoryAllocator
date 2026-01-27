@@ -170,8 +170,12 @@ void Allocator::insert_referece(Chunk *toInsert, Chunk *refChunk){
     }
 
     if(refChunk != nullptr && refChunk->Free != toInsert->Free){
+        bool refBeforeToInsert = refChunk->startIndex < toInsert->startIndex;
+
         // if the reference chunk occurs before toInsert
-        if( (refChunk->startIndex < toInsert->startIndex) && ( (refChunk->next == nullptr) || (refChunk->next->startIndex > toInsert->startIndex) ) ){
+        bool refHasNext = !(refChunk->next == nullptr);
+        bool nextAfterToInsert = (refHasNext) && (refChunk->next->startIndex > toInsert->startIndex);
+        if( refBeforeToInsert && (!refHasNext || nextAfterToInsert) ){
             // In case newFree was a head of some list
             if(toInsert == freeHead){
                 freeHead = toInsert->next;
@@ -189,8 +193,12 @@ void Allocator::insert_referece(Chunk *toInsert, Chunk *refChunk){
             refChunk->next = toInsert;
             toInsert->Free = !toInsert->Free;
             
-        } // if the reference chunk occurs after toInsert
-        else if( (refChunk->startIndex > toInsert->startIndex) && ( (refChunk->prev == nullptr) || (refChunk->prev->startIndex < toInsert->startIndex) ) ){
+        } 
+
+        // if the reference chunk occurs after toInsert
+        bool refHasPrev = !(refChunk->prev == nullptr);
+        bool prevBeforeToInsert = (refHasPrev) && (refChunk->prev->startIndex < toInsert->startIndex);
+        if( !refBeforeToInsert && (!refHasPrev || prevBeforeToInsert) ){
             // In case newFree was a head of some list
             if(toInsert == freeHead){
                 freeHead = toInsert->next;
