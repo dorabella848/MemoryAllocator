@@ -5,11 +5,7 @@
 int main()
 {
   Allocator alloc(100);
-  void* ptr = alloc.malloc(5);
-  void* ptr2 = alloc.malloc(60);
-  void* ptr3 = alloc.malloc(20);
-  alloc.free(ptr2);
-  ptr = alloc.realloc(ptr, 65);
+  void* ptr = alloc.malloc(55);
+  alloc.realloc(ptr, 4);
   alloc.printChunks();
-
 };
