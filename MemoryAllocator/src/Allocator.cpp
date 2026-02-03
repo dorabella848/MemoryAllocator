@@ -215,16 +215,16 @@ void Allocator::insert(Chunk *toInsert, Chunk *refChunk){
         toInsert->AbsNext->AbsPrev = toInsert;
     }
 
+    // Check if toInsert was a head
+    if(toInsert == freeHead){
+        freeHead = toInsert->next;
+    }
+    else if(toInsert == occHead){
+        occHead = toInsert->next;
+    }
+
     // Check the heads of the opposite list
     if( (toInsert->Free && occHead == nullptr) || (!toInsert->Free && freeHead == nullptr) ){
-        // Check if they were previously heads
-        if(toInsert == freeHead){
-            freeHead = toInsert->next;
-        }
-        else if(toInsert == occHead){
-            occHead = toInsert->next;
-        }
-
         toInsert->orphan();
         toInsert->Free = !toInsert->Free;
         if(toInsert->Free){
@@ -236,6 +236,13 @@ void Allocator::insert(Chunk *toInsert, Chunk *refChunk){
         return;
     }
 
+    // Since only free chunks carry valid next and prev ptrs we can skip this if the chunk is now occupied
+    if(toInsert->Free){
+        toInsert->Free = !toInsert->Free;
+        toInsert->orphan();
+        return;
+    }
+
     if(refChunk != nullptr && refChunk->Free != toInsert->Free){
         bool refBeforeToInsert = refChunk->startIndex < toInsert->startIndex;
 
@@ -243,14 +250,6 @@ void Allocator::insert(Chunk *toInsert, Chunk *refChunk){
         bool refHasNext = !(refChunk->next == nullptr);
         bool nextAfterToInsert = (refHasNext) && (refChunk->next->startIndex > toInsert->startIndex);
         if( refBeforeToInsert && (!refHasNext || nextAfterToInsert) ){
-            // In case newFree was a head of some list
-            if(toInsert == freeHead){
-                freeHead = toInsert->next;
-            }
-            else if(toInsert == occHead){
-                occHead = toInsert->next;
-            }
-
             toInsert->orphan();
             toInsert->prev = refChunk;
             if(refChunk->next != nullptr){
@@ -266,13 +265,6 @@ void Allocator::insert(Chunk *toInsert, Chunk *refChunk){
         bool refHasPrev = !(refChunk->prev == nullptr);
         bool prevBeforeToInsert = (refHasPrev) && (refChunk->prev->startIndex < toInsert->startIndex);
         if( !refBeforeToInsert && (!refHasPrev || prevBeforeToInsert) ){
-            // In case newFree was a head of some list
-            if(toInsert == freeHead){
-                freeHead = toInsert->next;
-            }
-            else if(toInsert == occHead){
-                occHead = toInsert->next;
-            }
             toInsert->orphan();
             toInsert->next = refChunk;
             if(refChunk->prev != nullptr){
