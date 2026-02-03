@@ -35,21 +35,24 @@ void TestConnections(Chunk* occHead, Chunk* freeHead, std::size_t freeMemory, st
     totalMem += currentChunk->chunkSize;
     if(currentChunk->Free){
       totalFreeMem += currentChunk->chunkSize;
+
+      if(currentChunk->prev != nullptr){
+        GTEST_ASSERT_LT(currentChunk->prev->startIndex, currentChunk->startIndex);
+        GTEST_ASSERT_EQ(currentChunk->prev->next, currentChunk);
+        GTEST_ASSERT_EQ(currentChunk->prev->Free, currentChunk->Free);
+      }
+      if(currentChunk->next != nullptr){
+        GTEST_ASSERT_GT(currentChunk->next->startIndex, currentChunk->startIndex);
+        GTEST_ASSERT_EQ(currentChunk->next->prev, currentChunk);
+        GTEST_ASSERT_EQ(currentChunk->next->Free, currentChunk->Free);
+      }
     }
-    if(currentChunk->prev != nullptr){
-      GTEST_ASSERT_LT(currentChunk->prev->startIndex, currentChunk->startIndex);
-      GTEST_ASSERT_EQ(currentChunk->prev->next, currentChunk);
-      GTEST_ASSERT_EQ(currentChunk->prev->Free, currentChunk->Free);
-    }
+    
     if(currentChunk->AbsPrev != nullptr){
       GTEST_ASSERT_LT(currentChunk->AbsPrev->startIndex, currentChunk->startIndex);
       GTEST_ASSERT_EQ(currentChunk->AbsPrev->AbsNext, currentChunk);
     }
-    if(currentChunk->next != nullptr){
-      GTEST_ASSERT_GT(currentChunk->next->startIndex, currentChunk->startIndex);
-      GTEST_ASSERT_EQ(currentChunk->next->prev, currentChunk);
-      GTEST_ASSERT_EQ(currentChunk->next->Free, currentChunk->Free);
-    }
+
     if(currentChunk->AbsNext != nullptr){
       GTEST_ASSERT_EQ(currentChunk->AbsNext->AbsPrev, currentChunk);
       // Make sure no free chunks are together
