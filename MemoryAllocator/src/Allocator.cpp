@@ -458,18 +458,47 @@ void* Allocator::realloc(void* ptr, size_t size){
         return target->startLoc;
     }
     else {
-        // Added min function since we dont want to copy more than necessary
-        int dataSize = min(target->chunkSize, size);
-        uint8_t* savedData = new uint8_t[dataSize]; // Have to use dynamic allocaiton since min() is processed at runtime
-        memcpy(savedData, ptr, dataSize);
-        Allocator::free(target->startLoc);
-        void* newBlock = malloc(size);
-        if (newBlock == nullptr){
-            return nullptr;
+        // If the next chunk is free it might be possible to reallocate in place
+        if(target->AbsNext != nullptr && target->AbsNext->Free){
+            // The chunk that is in front of target
+            Chunk* targetAfter = target->AbsNext;
+
+            targetAfter->startIndex += (size - target->chunkSize);
+            targetAfter->startLoc = &memoryPool[targetAfter->startIndex];
+            targetAfter->chunkSize -= (size - target->chunkSize);
+            freeMemory -= (size - target->chunkSize);
+            target->chunkSize = size;
+        
+            // If the free chunk was used up
+            if (targetAfter->chunkSize == 0){
+                target->AbsNext = targetAfter->AbsNext;
+                if(targetAfter->AbsNext != nullptr){
+                    targetAfter->AbsNext->AbsPrev = target;
+                }
+                if(targetAfter->prev != nullptr){
+                    targetAfter->prev->next = targetAfter->next;
+                }
+                if(targetAfter == freeHead){
+                    freeHead = targetAfter->next;
+                }
+                if(targetAfter->next != nullptr){
+                    targetAfter->next->prev = targetAfter->prev;
+                }
+                delete targetAfter;
+            }
+            return target->startLoc;
         }
-        memcpy(newBlock, savedData, dataSize);
-        delete[] savedData;
-        return newBlock;    
+        else{
+            int targetSize = target->chunkSize;
+            // ptr is target->starloc
+            this->free(ptr);
+            void* newBlock = this->malloc(size);
+            if (newBlock == nullptr){
+                return nullptr;
+            }
+            memmove(newBlock, ptr, targetSize);
+            return newBlock;    
+        }  
     }
 }
 
