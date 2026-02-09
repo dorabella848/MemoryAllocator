@@ -63,6 +63,13 @@ class Allocator {
         */
         void* getMemAddress(std::size_t index);
         /*
+        * Sets chunkSize for a chunk
+        *
+        * If the chunkSize is equal to 0, then the function also calls orphan().
+        * Outputs an error to the console if the newSize is < 0.
+        */
+        void updateSize(Chunk* target, std::size_t newSize);
+        /*
         * Prints the current memory pool's statistics and the chunk's connections, postions, and size 
         * in order of occurence within the memory pool to the console.
         */

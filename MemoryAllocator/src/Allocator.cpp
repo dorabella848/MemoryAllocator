@@ -80,6 +80,29 @@ size_t Allocator::getMemoryTotal(){
 void* Allocator::getMemAddress(size_t index){
     return &memoryPool[index];
 }
+void Allocator::updateSize(Chunk* target, std::size_t newSize)
+{
+    if(target == nullptr){
+        std::cout << "Attempted to update nullptr to size " << newSize << std::endl;
+        return;
+    }
+    if(newSize < 0){
+        std::cout << "Error occured: Attempted to update chunkSize for ptr {" << target->startLoc << "} to less than 0." << std::endl;
+        return;
+    }
+
+    target->chunkSize = newSize;
+
+    if(newSize == 0){
+        if(target == freeHead){
+            freeHead = target->next;
+        }
+        else if(target == occHead){
+            occHead = target->next;
+        }
+        target->orphan();
+    }
+}
 void Allocator::printChunks(){
     cout << "\nTotal Memory: " << memorySize << endl;
     switch(occHead != nullptr){
@@ -116,42 +139,20 @@ Chunk* Allocator::merge(Chunk *newFree){
    // Check in front
     if(newFree->AbsNext != nullptr && newFree->AbsNext->Free){
         Chunk* nextFree = newFree->AbsNext;
-        //Remove nextFree from freeList
-        newFree->next = nextFree->next;
-        if(nextFree->next != nullptr){
-            nextFree->next->prev = newFree;
-            }
-        if(nextFree == freeHead){
-            freeHead = nextFree->next;
-            }
-        //correct abslist
-        newFree->AbsNext = nextFree->AbsNext;
-        if(nextFree->AbsNext != nullptr){
-            nextFree->AbsNext->AbsPrev = newFree;
-            }
         newFree->chunkSize += nextFree->chunkSize;
+        updateSize(nextFree, 0);
         delete nextFree;
         }
     // Check behind
     if(newFree->AbsPrev != nullptr && newFree->AbsPrev->Free){
         Chunk* prevFree = newFree->AbsPrev;
-        //Remove newFree from freeList
-        prevFree->next = newFree->next;
-        if(newFree->next != nullptr){
-            newFree->next->prev = prevFree;
-        }
-        //correct abslist
-        prevFree->AbsNext = newFree->AbsNext;
-        if(newFree->AbsNext != nullptr){
-            newFree->AbsNext->AbsPrev = prevFree;
-        }
         prevFree->chunkSize += newFree->chunkSize;
-
+        updateSize(newFree, 0);
         delete newFree;
+        
         return prevFree;
     }
     return newFree;
-       
 }
 
 Chunk* Allocator::findOppReference(Chunk* initialChunk){
@@ -215,16 +216,16 @@ void Allocator::insert(Chunk *toInsert, Chunk *refChunk){
         toInsert->AbsNext->AbsPrev = toInsert;
     }
 
+    // Check if toInsert was previously a head
+    if(toInsert == freeHead){
+        freeHead = toInsert->next;
+    }
+    else if(toInsert == occHead){
+        occHead = toInsert->next;
+    }
+
     // Check the heads of the opposite list
     if( (toInsert->Free && occHead == nullptr) || (!toInsert->Free && freeHead == nullptr) ){
-        // Check if they were previously heads
-        if(toInsert == freeHead){
-            freeHead = toInsert->next;
-        }
-        else if(toInsert == occHead){
-            occHead = toInsert->next;
-        }
-
         toInsert->orphan();
         toInsert->Free = !toInsert->Free;
         if(toInsert->Free){
@@ -243,14 +244,6 @@ void Allocator::insert(Chunk *toInsert, Chunk *refChunk){
         bool refHasNext = !(refChunk->next == nullptr);
         bool nextAfterToInsert = (refHasNext) && (refChunk->next->startIndex > toInsert->startIndex);
         if( refBeforeToInsert && (!refHasNext || nextAfterToInsert) ){
-            // In case newFree was a head of some list
-            if(toInsert == freeHead){
-                freeHead = toInsert->next;
-            }
-            else if(toInsert == occHead){
-                occHead = toInsert->next;
-            }
-
             toInsert->orphan();
             toInsert->prev = refChunk;
             if(refChunk->next != nullptr){
@@ -266,13 +259,6 @@ void Allocator::insert(Chunk *toInsert, Chunk *refChunk){
         bool refHasPrev = !(refChunk->prev == nullptr);
         bool prevBeforeToInsert = (refHasPrev) && (refChunk->prev->startIndex < toInsert->startIndex);
         if( !refBeforeToInsert && (!refHasPrev || prevBeforeToInsert) ){
-            // In case newFree was a head of some list
-            if(toInsert == freeHead){
-                freeHead = toInsert->next;
-            }
-            else if(toInsert == occHead){
-                occHead = toInsert->next;
-            }
             toInsert->orphan();
             toInsert->next = refChunk;
             if(refChunk->prev != nullptr){
@@ -335,27 +321,16 @@ void* Allocator::malloc(size_t size){
     newChunk->startLoc = &memoryPool[newChunk->startIndex];
     freeCurrent->startIndex += newChunk->chunkSize;
     freeCurrent->startLoc = &memoryPool[freeCurrent->startIndex];
-    freeCurrent->chunkSize -= newChunk->chunkSize;
-    
+
     newChunk->AbsNext = freeCurrent;
     newChunk->AbsPrev = freeCurrent->AbsPrev;
-    
-    if (freeCurrent->chunkSize == 0){
-        newChunk->AbsNext = freeCurrent->AbsNext;
-        if(freeCurrent->prev != nullptr){
-            freeCurrent->prev->next = freeCurrent->next;
-        }
-        if(freeCurrent == freeHead){
-            freeHead = freeCurrent->next;
-        }
-        if(freeCurrent->next != nullptr){
-            freeCurrent->next->prev = freeCurrent->prev;
-        }
-        delete freeCurrent;
-    }
     this->insert(newChunk, this->findOppReference(newChunk));
+    updateSize(freeCurrent, freeCurrent->chunkSize - newChunk->chunkSize);
     // Update freeMemory tracker
     freeMemory -= size;
+    if (freeCurrent->chunkSize == 0){
+        delete freeCurrent;
+    }
 
     return (newChunk->startLoc);
 

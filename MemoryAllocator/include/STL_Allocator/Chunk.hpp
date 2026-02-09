@@ -29,7 +29,6 @@ struct Chunk {
     * Removes next and prev connections to a chunk
     * if the chunk has a chunksize of 0, also remove abs ptrs
     */
-    // 
     void orphan()
     {
         if(this->prev != nullptr){
@@ -50,26 +49,6 @@ struct Chunk {
             }
             this->AbsNext = nullptr;
             this->AbsPrev = nullptr;
-            // Delete the chunk ptr here?
-        }
-    }
-
-    /*
-    * Sets chunkSize for a chunk
-    *
-    * If the chunkSize is equal to 0, then the function also calls orphan().
-    * Outputs an error to the console if the newSize is < 0.
-    */
-    void updateSize(std::size_t newSize)
-    {
-        if(newSize < 0){
-            std::cout << "Error occured: Attempted to update chunkSize for ptr {" << startLoc << "} to 0." << std::endl;
-            return;
-        }
-
-        this->chunkSize = newSize;
-        if(newSize == 0){
-            this->orphan();
         }
     }
 
