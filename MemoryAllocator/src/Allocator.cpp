@@ -201,6 +201,37 @@ Chunk* Allocator::findOppReference(Chunk* initialChunk){
     return refChunk;
 }
 
+Chunk* Allocator::splitChunk(Chunk* parentChunk, std::size_t newChunkSz){
+    // Check if parentChunk could perform the creation
+    if(parentChunk == nullptr || parentChunk->chunkSize < newChunkSz){
+        return nullptr;
+    }
+
+    size_t newParentSize = parentChunk->chunkSize - newChunkSz;
+    Chunk* newChunk = new Chunk(parentChunk->startIndex + newParentSize, newChunkSz, parentChunk->Free);
+    newChunk->startLoc = &memoryPool[newChunk->startIndex];
+    newChunk->AbsNext = parentChunk->AbsNext;
+    newChunk->AbsPrev = parentChunk;
+
+    // This is because updateSize() will remove some from freeMemory when
+    // lowering the size of a free chunk
+    if(parentChunk->Free){
+        freeMemory += newChunkSz;
+    }
+
+    // This is technically extra unnecessary work, but just in case this is used outside of insert()
+    if(parentChunk->AbsNext != nullptr){
+        parentChunk->AbsNext->AbsPrev = newChunk;
+    }
+    if(parentChunk->AbsPrev != nullptr){
+        parentChunk->AbsPrev->AbsNext = newChunk;
+    }
+
+    updateSize(parentChunk, newParentSize);
+
+    return newChunk;
+}
+
 void Allocator::insert(Chunk *toInsert, Chunk *refChunk){
     // Updates the next, prev, and free vars of a chunk
     // ref chunk is the closest chunk behind or after toInsert of the opposite type

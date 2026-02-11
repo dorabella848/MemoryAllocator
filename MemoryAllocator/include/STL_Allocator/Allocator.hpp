@@ -31,6 +31,30 @@ class Allocator {
         * No reference chunk is required if the opposite type list is empty
         */
         void insert(Chunk *toInsert, Chunk *refChunk=nullptr);
+        /*
+        * Sets chunkSize for a chunk
+        *
+        * If the chunkSize is equal to 0, then the function also calls orphan().
+        * Outputs an error to the console if the newSize is < 0.
+        */
+        void updateSize(Chunk* target, std::size_t newSize);
+        /*
+        * Creates a chunk for a given size without its type ptrs which occurs after the remaining memory 
+        * of a parent chunk.
+        *
+        * This works by splitting a given parentChunk into two parts, one of size newChunkSz and another the remaining memory
+        * parentChunk can be both free and occupied (realloc).
+        * 
+        * The remainder of parentChunk occurs before the newly divided chunk of chunkSize in order to
+        * not update parentChunk's ptr.
+        * 
+        * The update to parentChunk's memory is done through updateSize().
+        * 
+        * Warning: If parentChunk is an occupied chunk, its data may be deleted, and having two free chunks next to eachother is technically an error.
+        * 
+        * This chunk will have its abs ptrs established but not its type ptrs.
+        */
+        Chunk* splitChunk(Chunk* parentChunk, std::size_t newChunkSz);
         
     public:
         Allocator(std::size_t numBytes);
@@ -62,13 +86,6 @@ class Allocator {
         * startIndex var stored within a chunk alligns with startLoc var for a chunk.
         */
         void* getMemAddress(std::size_t index);
-        /*
-        * Sets chunkSize for a chunk
-        *
-        * If the chunkSize is equal to 0, then the function also calls orphan().
-        * Outputs an error to the console if the newSize is < 0.
-        */
-        void updateSize(Chunk* target, std::size_t newSize);
         /*
         * Prints the current memory pool's statistics and the chunk's connections, postions, and size 
         * in order of occurence within the memory pool to the console.
