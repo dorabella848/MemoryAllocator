@@ -39,7 +39,7 @@ class Allocator {
         */
         void updateSize(Chunk* target, std::size_t newSize);
         /*
-        * Creates a chunk for a given size without its type ptrs which occurs after the remaining memory 
+        * Creates a chunk for a given size which starts after the remaining memory 
         * of a parent chunk.
         *
         * This works by splitting a given parentChunk into two parts, one of size newChunkSz and another the remaining memory
@@ -50,9 +50,7 @@ class Allocator {
         * 
         * The update to parentChunk's memory is done through updateSize().
         * 
-        * Warning: If parentChunk is an occupied chunk, its data may be deleted, and having two free chunks next to eachother is technically an error.
-        * 
-        * This chunk will have its abs ptrs established but not its type ptrs.
+        * Warning: Having two free chunks next to eachother is technically an error.
         */
         Chunk* splitChunk(Chunk* parentChunk, std::size_t newChunkSz);
         
