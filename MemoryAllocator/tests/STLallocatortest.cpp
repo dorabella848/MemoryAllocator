@@ -16,17 +16,16 @@ void TestConnections(Chunk* occHead, Chunk* freeHead, std::size_t freeMemory, st
   // Finding first chunk
   Chunk* currentChunk = nullptr;
   if(occHead == nullptr){
-      currentChunk = freeHead;
+    currentChunk = freeHead;
   }
   else if(freeHead == nullptr){
-      currentChunk = occHead;
-
+    currentChunk = occHead;
   }
   else if(occHead->startIndex == 0){
-      currentChunk = occHead;
+    currentChunk = occHead;
   }
   else{
-      currentChunk = occHead;
+    currentChunk = freeHead;
   }
   // Checking Connections
   size_t totalMem = 0;
