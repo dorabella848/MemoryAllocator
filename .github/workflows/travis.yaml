@@ -33,7 +33,9 @@ jobs:
 
     - name: Run Gtests via Valgrind
       working-directory: ${{github.workspace}}/build
-      run: valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./allocatortest
+      run: |
+        valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./allocatortest
+        valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./STLallocatortest
 
   # Generate .deb package
   GenPackage:
