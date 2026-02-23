@@ -82,14 +82,6 @@ void* Allocator::getMemAddress(size_t index){
 }
 void Allocator::updateSize(Chunk* target, std::size_t newSize)
 {
-    if(target == nullptr){
-        std::cout << "Attempted to update nullptr to size " << newSize << std::endl;
-        return;
-    }
-    if(newSize < 0){
-        std::cout << "Error occured: Attempted to update chunkSize for ptr {" << target->startLoc << "} to less than 0." << std::endl;
-        return;
-    }
     // Lowering the size of a free chunk decreases freeMemory and vice versa
     if(target->Free){
         freeMemory += newSize - target->chunkSize;
@@ -351,7 +343,6 @@ void* Allocator::malloc(size_t size){
 
     // No point in checking anything if there isnt theoretically enough space
     if(freeMemory < size){
-        cout << "Malloc failed for pointer of size (" << size  <<"): lack of free memory" << endl;
         return nullptr;
     }
 
@@ -443,7 +434,6 @@ void* Allocator::realloc(void* ptr, size_t size){
     
     // Check if its even possible to perform the new reallocation
     if( (size > target->chunkSize) && (freeMemory < size - target->chunkSize) ){
-        cout << "Reallocation failed for " << ptr << ": lack of free memory" << endl;
         return target->startLoc;
     }
     if(target->chunkSize == size){
