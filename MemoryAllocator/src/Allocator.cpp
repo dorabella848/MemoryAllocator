@@ -4,7 +4,6 @@
 #include <cmath> 
 #include <cstring>
 #include <iostream>
-#include <stdexcept> // logic_error
 using namespace std;
 
 // Ctor
