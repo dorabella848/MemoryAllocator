@@ -454,30 +454,8 @@ void* Allocator::realloc(void* ptr, size_t size){
         if(target->AbsNext != nullptr && target->AbsNext->Free){
             // The chunk that is in front of target
             Chunk* targetAfter = target->AbsNext;
-
-            targetAfter->startIndex += (size - target->chunkSize);
-            targetAfter->startLoc = &memoryPool[targetAfter->startIndex];
-            targetAfter->chunkSize -= (size - target->chunkSize);
-            freeMemory -= (size - target->chunkSize);
-            target->chunkSize = size;
-        
-            // If the free chunk was used up
-            if (targetAfter->chunkSize == 0){
-                target->AbsNext = targetAfter->AbsNext;
-                if(targetAfter->AbsNext != nullptr){
-                    targetAfter->AbsNext->AbsPrev = target;
-                }
-                if(targetAfter->prev != nullptr){
-                    targetAfter->prev->next = targetAfter->next;
-                }
-                if(targetAfter == freeHead){
-                    freeHead = targetAfter->next;
-                }
-                if(targetAfter->next != nullptr){
-                    targetAfter->next->prev = targetAfter->prev;
-                }
-                delete targetAfter;
-            }
+            updateSize(target, size);
+            updateSize(targetAfter, size - target->chunkSize);
             return target->startLoc;
         }
         else{
