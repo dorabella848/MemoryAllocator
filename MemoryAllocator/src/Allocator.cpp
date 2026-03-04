@@ -4,7 +4,6 @@
 #include <cmath> 
 #include <cstring>
 #include <iostream>
-#include <stdexcept> // logic_error
 using namespace std;
 
 // Ctor
@@ -80,6 +79,25 @@ size_t Allocator::getMemoryTotal(){
 void* Allocator::getMemAddress(size_t index){
     return &memoryPool[index];
 }
+void Allocator::updateSize(Chunk* target, std::size_t newSize)
+{
+    // Lowering the size of a free chunk decreases freeMemory and vice versa
+    if(target->Free){
+        freeMemory += newSize - target->chunkSize;
+    }
+
+    target->chunkSize = newSize;
+
+    if(newSize == 0){
+        if(target == freeHead){
+            freeHead = target->next;
+        }
+        else if(target == occHead){
+            occHead = target->next;
+        }
+        target->orphan();
+    }
+}
 void Allocator::printChunks(){
     cout << "\nTotal Memory: " << memorySize << endl;
     switch(occHead != nullptr){
@@ -116,42 +134,20 @@ Chunk* Allocator::merge(Chunk *newFree){
    // Check in front
     if(newFree->AbsNext != nullptr && newFree->AbsNext->Free){
         Chunk* nextFree = newFree->AbsNext;
-        //Remove nextFree from freeList
-        newFree->next = nextFree->next;
-        if(nextFree->next != nullptr){
-            nextFree->next->prev = newFree;
-            }
-        if(nextFree == freeHead){
-            freeHead = nextFree->next;
-            }
-        //correct abslist
-        newFree->AbsNext = nextFree->AbsNext;
-        if(nextFree->AbsNext != nullptr){
-            nextFree->AbsNext->AbsPrev = newFree;
-            }
-        newFree->chunkSize += nextFree->chunkSize;
+        updateSize(newFree, newFree->chunkSize + nextFree->chunkSize);
+        updateSize(nextFree, 0);
         delete nextFree;
         }
     // Check behind
     if(newFree->AbsPrev != nullptr && newFree->AbsPrev->Free){
         Chunk* prevFree = newFree->AbsPrev;
-        //Remove newFree from freeList
-        prevFree->next = newFree->next;
-        if(newFree->next != nullptr){
-            newFree->next->prev = prevFree;
-        }
-        //correct abslist
-        prevFree->AbsNext = newFree->AbsNext;
-        if(newFree->AbsNext != nullptr){
-            newFree->AbsNext->AbsPrev = prevFree;
-        }
-        prevFree->chunkSize += newFree->chunkSize;
-
+        updateSize(prevFree, prevFree->chunkSize + newFree->chunkSize);
+        updateSize(newFree, 0);
         delete newFree;
+        
         return prevFree;
     }
     return newFree;
-       
 }
 
 Chunk* Allocator::findOppReference(Chunk* initialChunk){
@@ -200,6 +196,44 @@ Chunk* Allocator::findOppReference(Chunk* initialChunk){
     return refChunk;
 }
 
+Chunk* Allocator::splitChunk(Chunk* parentChunk, std::size_t newChunkSz){
+    // Check if parentChunk could perform the creation
+    if(parentChunk == nullptr || parentChunk->chunkSize < newChunkSz){
+        return nullptr;
+    }
+
+    size_t newParentSize = parentChunk->chunkSize - newChunkSz;
+    Chunk* newChunk = new Chunk(parentChunk->startIndex + newParentSize, newChunkSz, parentChunk->Free);
+    newChunk->startLoc = &memoryPool[newChunk->startIndex];
+    newChunk->AbsNext = parentChunk->AbsNext;
+    newChunk->AbsPrev = parentChunk;
+    newChunk->next = parentChunk->next;
+    newChunk->prev = parentChunk;
+
+    if(parentChunk->AbsNext != nullptr){
+        parentChunk->AbsNext->AbsPrev = newChunk;
+    }
+    if(parentChunk->next != nullptr){
+        parentChunk->next->prev = newChunk;
+    }
+
+    parentChunk->AbsNext = newChunk;
+    parentChunk->next = newChunk;
+
+    // This is because updateSize() will remove some from freeMemory when
+    // lowering the size of a free chunk
+    if(parentChunk->Free){
+        freeMemory += newChunkSz;
+    }
+
+    updateSize(parentChunk, newParentSize);
+    if(newParentSize == 0){
+        delete parentChunk;
+    }
+
+    return newChunk;
+}
+
 void Allocator::insert(Chunk *toInsert, Chunk *refChunk){
     // Updates the next, prev, and free vars of a chunk
     // ref chunk is the closest chunk behind or after toInsert of the opposite type
@@ -215,16 +249,23 @@ void Allocator::insert(Chunk *toInsert, Chunk *refChunk){
         toInsert->AbsNext->AbsPrev = toInsert;
     }
 
+    // Check if toInsert was previously a head
+    if(toInsert == freeHead){
+        freeHead = toInsert->next;
+    }
+    else if(toInsert == occHead){
+        occHead = toInsert->next;
+    }
+
+    if(toInsert->Free){
+        freeMemory -= toInsert->chunkSize;
+    }
+    else{
+        freeMemory += toInsert->chunkSize;
+    }
+
     // Check the heads of the opposite list
     if( (toInsert->Free && occHead == nullptr) || (!toInsert->Free && freeHead == nullptr) ){
-        // Check if they were previously heads
-        if(toInsert == freeHead){
-            freeHead = toInsert->next;
-        }
-        else if(toInsert == occHead){
-            occHead = toInsert->next;
-        }
-
         toInsert->orphan();
         toInsert->Free = !toInsert->Free;
         if(toInsert->Free){
@@ -243,14 +284,6 @@ void Allocator::insert(Chunk *toInsert, Chunk *refChunk){
         bool refHasNext = !(refChunk->next == nullptr);
         bool nextAfterToInsert = (refHasNext) && (refChunk->next->startIndex > toInsert->startIndex);
         if( refBeforeToInsert && (!refHasNext || nextAfterToInsert) ){
-            // In case newFree was a head of some list
-            if(toInsert == freeHead){
-                freeHead = toInsert->next;
-            }
-            else if(toInsert == occHead){
-                occHead = toInsert->next;
-            }
-
             toInsert->orphan();
             toInsert->prev = refChunk;
             if(refChunk->next != nullptr){
@@ -266,13 +299,6 @@ void Allocator::insert(Chunk *toInsert, Chunk *refChunk){
         bool refHasPrev = !(refChunk->prev == nullptr);
         bool prevBeforeToInsert = (refHasPrev) && (refChunk->prev->startIndex < toInsert->startIndex);
         if( !refBeforeToInsert && (!refHasPrev || prevBeforeToInsert) ){
-            // In case newFree was a head of some list
-            if(toInsert == freeHead){
-                freeHead = toInsert->next;
-            }
-            else if(toInsert == occHead){
-                occHead = toInsert->next;
-            }
             toInsert->orphan();
             toInsert->next = refChunk;
             if(refChunk->prev != nullptr){
@@ -316,7 +342,6 @@ void* Allocator::malloc(size_t size){
 
     // No point in checking anything if there isnt theoretically enough space
     if(freeMemory < size){
-        cout << "Malloc failed for pointer of size (" << size  <<"): lack of free memory" << endl;
         return nullptr;
     }
 
@@ -331,31 +356,8 @@ void* Allocator::malloc(size_t size){
         return nullptr;
     }
 
-    Chunk* newChunk = new Chunk(freeCurrent->startIndex, size, true);
-    newChunk->startLoc = &memoryPool[newChunk->startIndex];
-    freeCurrent->startIndex += newChunk->chunkSize;
-    freeCurrent->startLoc = &memoryPool[freeCurrent->startIndex];
-    freeCurrent->chunkSize -= newChunk->chunkSize;
-    
-    newChunk->AbsNext = freeCurrent;
-    newChunk->AbsPrev = freeCurrent->AbsPrev;
-    
-    if (freeCurrent->chunkSize == 0){
-        newChunk->AbsNext = freeCurrent->AbsNext;
-        if(freeCurrent->prev != nullptr){
-            freeCurrent->prev->next = freeCurrent->next;
-        }
-        if(freeCurrent == freeHead){
-            freeHead = freeCurrent->next;
-        }
-        if(freeCurrent->next != nullptr){
-            freeCurrent->next->prev = freeCurrent->prev;
-        }
-        delete freeCurrent;
-    }
+    Chunk* newChunk = splitChunk(freeCurrent, size);
     this->insert(newChunk, this->findOppReference(newChunk));
-    // Update freeMemory tracker
-    freeMemory -= size;
 
     return (newChunk->startLoc);
 
@@ -390,8 +392,7 @@ void Allocator::free(void* ptr){
     if(target == nullptr){
         return;
     }
-    // Since we know the ptr exists we can update freeMemory here
-    freeMemory += target->chunkSize;
+    
     if(prevFree == nullptr){
         this->insert(target, this->findOppReference(target));
     }
@@ -432,29 +433,20 @@ void* Allocator::realloc(void* ptr, size_t size){
     
     // Check if its even possible to perform the new reallocation
     if( (size > target->chunkSize) && (freeMemory < size - target->chunkSize) ){
-        cout << "Reallocation failed for " << ptr << ": lack of free memory" << endl;
         return target->startLoc;
     }
     if(target->chunkSize == size){
         return target->startLoc;
     }
     else if (target->chunkSize > size){
-        // We know the pointers exist so we can update freeMemory
-        freeMemory -= (size - target->chunkSize);
-        Chunk* newFreeChunk = new Chunk(target->startIndex + size, target->chunkSize-size, false);
-        newFreeChunk->AbsNext = target->AbsNext;
-        newFreeChunk->AbsPrev = target;
-        newFreeChunk->startLoc = &memoryPool[newFreeChunk->startIndex];
-
+        Chunk* newFreeChunk = splitChunk(target, target->chunkSize - size);
         if(prevFree == nullptr){
             this->insert(newFreeChunk, this->findOppReference(newFreeChunk));
         }
         else{
             this->insert(newFreeChunk, prevFree);
         }
-
         this->merge(newFreeChunk);
-        target->chunkSize = size;
         return target->startLoc;
     }
     else {

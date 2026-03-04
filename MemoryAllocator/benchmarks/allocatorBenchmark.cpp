@@ -2,7 +2,6 @@
 #include "STL_Allocator/STL_Allocator.hpp"
 #include "STL_Allocator/Chunk.hpp"
 #include <cstring>
-#include <memory>
 
 // Continuously create chunks of a varied size, empty the memory pool when there is no free memory left
 static void Malloc_Complexity(benchmark::State& state) {

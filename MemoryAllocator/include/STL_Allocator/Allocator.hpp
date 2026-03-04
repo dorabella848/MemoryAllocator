@@ -1,4 +1,3 @@
-#include <new>
 #include <cstdint>
 struct Chunk;
 
@@ -31,6 +30,28 @@ class Allocator {
         * No reference chunk is required if the opposite type list is empty
         */
         void insert(Chunk *toInsert, Chunk *refChunk=nullptr);
+        /*
+        * Sets chunkSize for a chunk
+        *
+        * If the chunkSize is equal to 0, then the function also calls orphan().
+        * Outputs an error to the console if the newSize is < 0.
+        */
+        void updateSize(Chunk* target, std::size_t newSize);
+        /*
+        * Creates a chunk for a given size which starts after the remaining memory 
+        * of a parent chunk.
+        *
+        * This works by splitting a given parentChunk into two parts, one of size newChunkSz and another the remaining memory
+        * parentChunk can be both free and occupied (realloc).
+        * 
+        * The remainder of parentChunk occurs before the newly divided chunk of chunkSize in order to
+        * not update parentChunk's ptr.
+        * 
+        * The update to parentChunk's memory is done through updateSize().
+        * 
+        * Warning: Having two free chunks next to eachother is technically an error.
+        */
+        Chunk* splitChunk(Chunk* parentChunk, std::size_t newChunkSz);
         
     public:
         Allocator(std::size_t numBytes);
