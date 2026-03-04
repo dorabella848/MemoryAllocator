@@ -1,5 +1,4 @@
 #include <cstddef>
-
 struct Chunk {
     int startIndex;
     void* startLoc;
@@ -25,7 +24,10 @@ struct Chunk {
     prev(nullptr),
     AbsNext(nullptr),
     AbsPrev(nullptr) {};
-
+    /*
+    * Removes next and prev connections to a chunk
+    * if the chunk has a chunksize of 0, also remove abs ptrs
+    */
     void orphan()
     {
         if(this->prev != nullptr){
@@ -36,6 +38,17 @@ struct Chunk {
         }
         this->next = nullptr;
         this->prev = nullptr;
+
+        if(this->chunkSize == 0){
+            if(this->AbsPrev != nullptr){
+                this->AbsPrev->AbsNext = this->AbsNext;
+            }
+            if(this->AbsNext != nullptr){
+                this->AbsNext->AbsPrev = this->AbsPrev;
+            }
+            this->AbsNext = nullptr;
+            this->AbsPrev = nullptr;
+        }
     }
 
     ~Chunk() {
