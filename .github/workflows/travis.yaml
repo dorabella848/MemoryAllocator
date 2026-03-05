@@ -21,7 +21,7 @@ jobs:
 
     - name: Configure
       run: |
-        cd MemoryAllocator/
+        cd allocatorRoot/
         cmake --preset ${{env.BUILD_TYPE}} -DEnableTests=ON
 
     - name: Build
@@ -48,7 +48,7 @@ jobs:
 
     - name: Configure
       run: |
-        cd MemoryAllocator/
+        cd allocatorRoot/
         cmake --preset ${{env.BUILD_TYPE}} -DEnableTests=ON
 
     - name: Build
