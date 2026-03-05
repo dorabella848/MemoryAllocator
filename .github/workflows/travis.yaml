@@ -57,14 +57,14 @@ jobs:
       run: cmake --build --preset ${{env.BUILD_TYPE}}
 
     - name: Create .deb package
-      working-directory: ${{github.workspace}}/allocatorRoot
+      working-directory: ${{github.workspace}}/allocatorRoot/build/${{env.BUILD_TYPE}}
       run: cpack -G DEB
 
     - name: Upload .deb package
       uses: actions/upload-artifact@v4
       with:
         name: MemoryAllocatorDEB
-        path: build/*.deb
+        path: ${{github.workspace}}/allocatorRoot/build/${{env.BUILD_TYPE}}/*.deb
 
   runDebPackage:
     runs-on: ubuntu-latest
