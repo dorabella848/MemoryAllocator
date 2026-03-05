@@ -25,7 +25,9 @@ jobs:
         cmake --preset ${{env.BUILD_TYPE}} -DEnableTests=ON
 
     - name: Build
-      run: cmake --build --preset ${{env.BUILD_TYPE}}
+      run: |
+          cd allocatorRoot/
+          cmake --build --preset ${{env.BUILD_TYPE}}
 
     - name: Run Gtests
       working-directory: ${{github.workspace}}/build
@@ -52,7 +54,9 @@ jobs:
         cmake --preset ${{env.BUILD_TYPE}} -DEnableTests=ON
 
     - name: Build
-      run: cmake --build --preset ${{env.BUILD_TYPE}}
+      run: |
+          cd allocatorRoot/
+          cmake --build --preset ${{env.BUILD_TYPE}}
 
     - name: Create .deb package
       working-directory: build
@@ -75,7 +79,6 @@ jobs:
       with:
         name: MemoryAllocatorDEB
         path: build
-
 
     - name: Install .deb package
       run:
