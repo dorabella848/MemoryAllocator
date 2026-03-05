@@ -13,7 +13,8 @@ jobs:
   # Run the unit tests via ctest and valgrind
   Test:
     runs-on: ubuntu-latest
-    working-directory: ${{github.workspace}}/allocatorRoot
+    defaults:
+      working-directory: ${{github.workspace}}/allocatorRoot
 
     steps:
     - uses: actions/checkout@v4
@@ -42,7 +43,9 @@ jobs:
   # Generate .deb package
   GenPackage:
     runs-on: ubuntu-latest
-    working-directory: ${{github.workspace}}/allocatorRoot
+    defaults:
+      working-directory: ${{github.workspace}}/allocatorRoot
+      
     steps:
     - uses: actions/checkout@v4
 
