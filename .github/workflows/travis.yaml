@@ -13,6 +13,8 @@ jobs:
   # Run the unit tests via ctest and valgrind
   Test:
     runs-on: ubuntu-latest
+    working-directory: ${{github.workspace}}/allocatorRoot
+
     steps:
     - uses: actions/checkout@v4
 
@@ -20,24 +22,19 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y ninja-build
 
     - name: Configure
-      run: |
-        cd allocatorRoot/
-        cmake --preset ${{env.BUILD_TYPE}} -DEnableTests=ON
+      run: cmake --preset ${{env.BUILD_TYPE}} -DEnableTests=ON
 
     - name: Build
-      run: |
-          cd allocatorRoot/
-          cmake --build --preset ${{env.BUILD_TYPE}}
+      run: cmake --build --preset ${{env.BUILD_TYPE}}
 
     - name: Run Gtests
-      working-directory: ${{github.workspace}}/build
-      run: ctest --output-on-failure # Dont want to run the length valgrind if there is an inherent error with the logic in the code
+      run: ./build/${{env.BUILD_TYPE}}/allocatortest # Dont want to run the length valgrind if there is an inherent error with the logic in the code
     
     - name: Install Valgrind
       run: sudo apt-get update && sudo apt-get install -y valgrind
 
     - name: Run Gtests via Valgrind
-      working-directory: ${{github.workspace}}/build
+      working-directory: ${{github.workspace}}/allocatorRoot/build/${{env.BUILD_TYPE}}
       run: |
         valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./allocatortest
         valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./STLallocatortest
@@ -45,18 +42,15 @@ jobs:
   # Generate .deb package
   GenPackage:
     runs-on: ubuntu-latest
+    working-directory: ${{github.workspace}}/allocatorRoot
     steps:
     - uses: actions/checkout@v4
 
     - name: Configure
-      run: |
-        cd allocatorRoot/
-        cmake --preset ${{env.BUILD_TYPE}} -DEnableTests=ON
+      run: cmake --preset ${{env.BUILD_TYPE}} -DEnableTests=ON
 
     - name: Build
-      run: |
-          cd allocatorRoot/
-          cmake --build --preset ${{env.BUILD_TYPE}}
+      run: cmake --build --preset ${{env.BUILD_TYPE}}
 
     - name: Create .deb package
       working-directory: build
