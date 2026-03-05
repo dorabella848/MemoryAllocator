@@ -16,13 +16,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Get Gtests
-      run: 
+    - name: Install Ninja
+      run: sudo apt-get update && sudo apt-get install -y ninja-build
 
-    - name: Build with tests
-      run: |
-        cmake -S ${{github.workspace}}/MemoryAllocator . -B ${{github.workspace}}/build -DEnableTests=ON
-        make -C ${{github.workspace}}/build
+    - name: Configure
+      run: cmake --preset ${{env.BUILD_TYPE}} -DEnableTests=ON
+
+    - name: Build
+      run: cmake --build --preset ${{env.BUILD_TYPE}}
 
     - name: Run Gtests
       working-directory: ${{github.workspace}}/build
@@ -43,8 +44,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Configure
+      run: cmake --preset ${{env.BUILD_TYPE}} -DEnableTests=ON
+
     - name: Build
-      run: cmake -S ${{github.workspace}}/MemoryAllocator . -B ${{github.workspace}}/build
+      run: cmake --build --preset ${{env.BUILD_TYPE}}
 
     - name: Create .deb package
       working-directory: build

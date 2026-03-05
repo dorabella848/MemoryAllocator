@@ -1,0 +1,3 @@
+Checks: '*'
+ExcludePaths: 
+  - 'examples/AllocatorRunner.cpp'

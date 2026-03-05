@@ -2,15 +2,12 @@ out/
 build/
 googletest/
 .vscode/
-*.json
+launch.json
+settings.json
 gcov/
 mingw-toolchain.cmake
 coverage_html/
 coverage-report/
 _deps/
-<<<<<<< HEAD
-CMakeFiles/
-=======
 CMakeFiles/
 benchmark/
->>>>>>> main
