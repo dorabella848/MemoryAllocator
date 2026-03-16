@@ -28,9 +28,13 @@ jobs:
       working-directory: ${{github.workspace}}/allocatorRoot
       run: cmake --build --preset ${{env.BUILD_TYPE}}
 
+    # Dont want to run the length valgrind if there is an inherent error with the logic in the code
     - name: Run Gtests
       working-directory: ${{github.workspace}}/allocatorRoot
-      run: ./build/${{env.BUILD_TYPE}}/allocatortest # Dont want to run the length valgrind if there is an inherent error with the logic in the code
+      run: |
+        ./build/${{env.BUILD_TYPE}}/basicTest
+        ./build/${{env.BUILD_TYPE}}/stlTest
+
     
     - name: Install Valgrind
       run: sudo apt-get update && sudo apt-get install -y valgrind
@@ -91,7 +95,7 @@ jobs:
 
     - name: Test package
       run: |
-        echo -e '#include <STL_Allocator/Allocator.hpp>\nint main() { Allocator alloc(1); void* ptr = alloc.malloc(1); alloc.free(ptr); return 0; }' > test.cpp 
+        echo -e '#include <memoryAllocator/allocator.hpp>\nint main() { Allocator alloc(1); void* ptr = alloc.malloc(1); alloc.free(ptr); return 0; }' > test.cpp 
         clang++ test.cpp -lmemoryallocator -o test
         ./test
 

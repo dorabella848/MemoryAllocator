@@ -95,6 +95,7 @@ add_library(memoryallocator STATIC
 )
 target_include_directories(memoryallocator PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include/
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/
 )
 
 add_executable(Runner ${CMAKE_CURRENT_SOURCE_DIR}/examples/runner.cpp)
