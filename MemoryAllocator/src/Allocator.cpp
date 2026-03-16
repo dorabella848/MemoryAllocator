@@ -450,18 +450,25 @@ void* Allocator::realloc(void* ptr, size_t size){
         return target->startLoc;
     }
     else {
-        // Added min function since we dont want to copy more than necessary
-        int dataSize = min(target->chunkSize, size);
-        uint8_t* savedData = new uint8_t[dataSize]; // Have to use dynamic allocaiton since min() is processed at runtime
-        memcpy(savedData, ptr, dataSize);
-        Allocator::free(target->startLoc);
-        void* newBlock = malloc(size);
-        if (newBlock == nullptr){
-            return nullptr;
+        // If the next chunk is free it might be possible to reallocate in place
+        if(target->AbsNext != nullptr && target->AbsNext->Free){
+            // The chunk that is in front of target
+            Chunk* targetAfter = target->AbsNext;
+            updateSize(target, size);
+            updateSize(targetAfter, size - target->chunkSize);
+            return target->startLoc;
         }
-        memcpy(newBlock, savedData, dataSize);
-        delete[] savedData;
-        return newBlock;    
+        else{
+            int targetSize = target->chunkSize;
+            // ptr is target->starloc
+            this->free(ptr);
+            void* newBlock = this->malloc(size);
+            if (newBlock == nullptr){
+                return nullptr;
+            }
+            memmove(newBlock, ptr, targetSize);
+            return newBlock;    
+        }  
     }
 }
 
