@@ -35,7 +35,10 @@ if(ENABLE_TESTS AND NOT CMAKE_CROSSCOMPILING)
         GIT_SHALLOW TRUE
         )
         FetchContent_MakeAvailable(googletest)
-        
+        set_target_properties(gtest PROPERTIES CXX_CLANG_TIDY "")
+        set_target_properties(gtest_main PROPERTIES CXX_CLANG_TIDY "")
+        set_target_properties(gmock PROPERTIES CXX_CLANG_TIDY "")
+        set_target_properties(gmock_main PROPERTIES CXX_CLANG_TIDY "")
     endif()
     add_executable(basicTest ${CMAKE_CURRENT_SOURCE_DIR}/tests/basic.cpp)
     target_include_directories(basicTest PRIVATE 
@@ -78,6 +81,7 @@ if(ENABLE_BENCHMARKS)
         GIT_TAG main
         )
         FetchContent_MakeAvailable(benchmark)
+        set_target_properties(benchmark PROPERTIES CXX_CLANG_TIDY "")
     endif()
 
     add_executable(allocBenchmark ${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/benchmark.cpp)
@@ -127,12 +131,6 @@ set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6, libstdc++6")
 set(CPACK_DEBIAN_PACKAGE_RELEASE 1)
 
 include(CPack)
-
-set_target_properties(gtest PROPERTIES CXX_CLANG_TIDY "")
-set_target_properties(gtest_main PROPERTIES CXX_CLANG_TIDY "")
-set_target_properties(gmock PROPERTIES CXX_CLANG_TIDY "")
-set_target_properties(gmock_main PROPERTIES CXX_CLANG_TIDY "")
-set_target_properties(benchmark PROPERTIES CXX_CLANG_TIDY "")
 
 
 #For running gcov and lcov: 
