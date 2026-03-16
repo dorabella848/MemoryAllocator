@@ -22,7 +22,7 @@ jobs:
 
     - name: Configure
       working-directory: ${{github.workspace}}/allocatorRoot
-      run: cmake --preset ${{env.BUILD_TYPE}} -DEnableTests=ON
+      run: cmake --preset ${{env.BUILD_TYPE}} -DENABLE_TESTS=ON
 
     - name: Build
       working-directory: ${{github.workspace}}/allocatorRoot
@@ -38,8 +38,8 @@ jobs:
     - name: Run Gtests via Valgrind
       working-directory: ${{github.workspace}}/allocatorRoot/build/${{env.BUILD_TYPE}}
       run: |
-        valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./allocatortest
-        valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./STLallocatortest
+        valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./basicTest
+        valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./stlTest
 
   # Generate .deb package
   GenPackage:
@@ -50,7 +50,7 @@ jobs:
 
     - name: Configure
       working-directory: ${{github.workspace}}/allocatorRoot
-      run: cmake --preset ${{env.BUILD_TYPE}} -DEnableTests=ON
+      run: cmake --preset ${{env.BUILD_TYPE}} -DENABLE_TESTS=ON
 
     - name: Build
       working-directory: ${{github.workspace}}/allocatorRoot
