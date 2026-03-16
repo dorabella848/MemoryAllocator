@@ -13,7 +13,7 @@
 
         "CMAKE_BUILD_TYPE": "Debug",
 
-        "CMAKE_CXX_CLANG_TIDY": "clang-tidy"
+        "CMAKE_CXX_CLANG_TIDY": "clang-tidy;--config-file=${sourceDir}/.clang-tidy"
       }
 
     },

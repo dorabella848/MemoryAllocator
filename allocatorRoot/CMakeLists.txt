@@ -35,6 +35,7 @@ if(ENABLE_TESTS AND NOT CMAKE_CROSSCOMPILING)
         GIT_SHALLOW TRUE
         )
         FetchContent_MakeAvailable(googletest)
+        
     endif()
     add_executable(basicTest ${CMAKE_CURRENT_SOURCE_DIR}/tests/basic.cpp)
     target_include_directories(basicTest PRIVATE 
@@ -126,6 +127,14 @@ set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6, libstdc++6")
 set(CPACK_DEBIAN_PACKAGE_RELEASE 1)
 
 include(CPack)
+
+set_target_properties(gtest PROPERTIES CXX_CLANG_TIDY "")
+set_target_properties(gtest_main PROPERTIES CXX_CLANG_TIDY "")
+set_target_properties(gmock PROPERTIES CXX_CLANG_TIDY "")
+set_target_properties(gmock_main PROPERTIES CXX_CLANG_TIDY "")
+set_target_properties(benchmark PROPERTIES CXX_CLANG_TIDY "")
+
+
 #For running gcov and lcov: 
 
 #There is a mismatched line error (58-62), cannot figure out why(?), lcov --capture --directory . --output-file coverage.info --ignore-errors mismatch
