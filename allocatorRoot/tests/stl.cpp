@@ -70,7 +70,6 @@ TEST(AllocatorSTL, STLmalloc){
   for(int i = 0; i < 100; i++){
     GTEST_ASSERT_EQ(vec.at(i), i);
   }
-  StlAllocator<int> alloc = vec.get_allocator();
 }
 
 TEST(AllocatorSTL, STLtestConnections){
