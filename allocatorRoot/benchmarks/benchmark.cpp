@@ -1,6 +1,6 @@
 #include <benchmark/benchmark.h>
-#include "STL_Allocator/STL_Allocator.hpp"
-#include "STL_Allocator/Chunk.hpp"
+#include "memoryAllocator/stl.hpp"
+#include "chunk.hpp"
 #include <cstring>
 
 // Continuously create chunks of a varied size, empty the memory pool when there is no free memory left
