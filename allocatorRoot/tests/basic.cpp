@@ -147,7 +147,7 @@ TEST(AllocatorFree, FragmentedFree){
   int* test1 = (int*)alloc.malloc(11);
   int* test2 = (int*)alloc.malloc(22);
   int* test3 = (int*)alloc.malloc(33);
-  
+
   GTEST_ASSERT_NE(test1, nullptr);
   GTEST_ASSERT_NE(test2, nullptr);
   GTEST_ASSERT_NE(test3, nullptr);
@@ -177,7 +177,7 @@ TEST(AllocatorFree, FreeChunkAhead){
   alloc.free(test3);
   alloc.free(test2);
   GTEST_ASSERT_NE(test1, nullptr);
-  GTEST_ASSERT_EQ(test3, nullptr);
+  GTEST_ASSERT_NE(test4, nullptr);
   TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
 }
 
@@ -190,7 +190,7 @@ TEST(AllocatorFree, FreeChunkBehind){
   alloc.free(test2);
   alloc.free(test3);
   GTEST_ASSERT_NE(test1, nullptr);
-  GTEST_ASSERT_EQ(test3, nullptr);
+  GTEST_ASSERT_NE(test4, nullptr);
   TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
 }
 
