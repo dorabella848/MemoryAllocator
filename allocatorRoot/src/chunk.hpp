@@ -1,6 +1,6 @@
 #include <cstddef>
 struct Chunk {
-    int startIndex;
+    std::size_t startIndex;
     void* startLoc;
     std::size_t chunkSize;
     bool Free;
@@ -15,7 +15,7 @@ struct Chunk {
 
     
 
-    Chunk(int startingIndex, int chunkSize, bool Free) : 
+    Chunk(std::size_t startingIndex, std::size_t chunkSize, bool Free) : 
     startIndex(startingIndex), 
     chunkSize(chunkSize), 
     Free(Free), 
