@@ -7,7 +7,11 @@ class StlAllocator{
 public:
   using value_type = T;
 
-  explicit StlAllocator(std::size_t Sz = 1024) : alloc(std::make_shared<Allocator>(Sz*sizeof(T))) {}
+  StlAllocator (const StlAllocator & other) = delete; // copy constructor
+  StlAllocator (StlAllocator && other) = delete; // move constructor
+  StlAllocator & operator=(const StlAllocator & other) = delete; // copy assignment
+  StlAllocator & operator=(StlAllocator && other) = delete; // move assignment
+  explicit StlAllocator(std::size_t blockCount = 1024) : alloc(std::make_shared<Allocator>(blockCount*sizeof(T))) {}
   /*
   * Allocates a chunk of {n * sizeof(T)} bytes and returns a T* to the chunk.
   * T is the datatype established during the creation of the allocator.
