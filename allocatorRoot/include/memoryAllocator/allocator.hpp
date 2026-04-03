@@ -55,6 +55,11 @@ class Allocator {
         
     public:
         Allocator(std::size_t numBytes);
+        Allocator (const Allocator & other) = delete; // copy constructor
+        Allocator (Allocator && other) = delete; // move constructor
+        Allocator & operator=(const Allocator & other) = delete; // copy assignment
+        Allocator & operator=(Allocator && other) = delete; // move assignment
+        
         ~Allocator();
         /*
         * Returns a Chunk* that points to the first free chunk.
