@@ -18,22 +18,8 @@ Allocator::Allocator(size_t numBytes){
 Allocator::~Allocator(){
     delete[] memoryPool;
     // Delete all free and occupied chunks
-    Chunk* currentChunk = nullptr;
-    if(occHead == nullptr){
-        currentChunk = freeHead;
-    }
-    else if(freeHead == nullptr){
-        currentChunk = occHead;
+    Chunk* currentChunk = getTrueHead();
 
-    }
-    else if(occHead->startIndex == 0){
-        currentChunk = occHead;
-    }
-    else{
-        currentChunk = freeHead;
-    }
-
-    Chunk* occCurrent = occHead;
     while(currentChunk != nullptr){
         if(currentChunk->AbsNext != nullptr){
             currentChunk = currentChunk->AbsNext;
@@ -55,18 +41,11 @@ Chunk* Allocator::getOccHead(){
 }
 Chunk* Allocator::getTrueHead(){
     Chunk* trueHead = nullptr;
-    if(occHead == nullptr){
+    if(occHead == nullptr || occHead->startIndex != 0){
         trueHead = freeHead;
-    }
-    else if(freeHead == nullptr){
-        trueHead = occHead;
-
-    }
-    else if(occHead->startIndex == 0){
-        trueHead = occHead;
     }
     else{
-        trueHead = freeHead;
+        trueHead = occHead;
     }
     return trueHead;
 }
@@ -99,35 +78,40 @@ void Allocator::updateSize(Chunk* target, std::size_t newSize)
     }
 }
 void Allocator::printChunks(){
-    cout << "\nTotal Memory: " << memorySize << endl;
-    switch(occHead != nullptr){
-        case true: cout << "occHead: " << occHead->startLoc << endl; break;
-        default: cout << "occHead: " << 0 << endl; break;
+    cout << "\nTotal Memory: " << memorySize << "\n";
+
+    if(occHead != nullptr){
+        cout << "occHead: " << occHead->startLoc << "\n";
     }
-    switch(freeHead != nullptr){
-        case true: cout << "freeHead: " << freeHead->startLoc << endl << endl; break;
-        default: cout << "freeHead: " << 0 << endl << endl; break;
+    else{
+        cout << "occHead: nullptr\n";
+    }
+    if(freeHead != nullptr){
+        cout << "freeHead: " << freeHead->startLoc << "\n\n";
+    }
+    else{
+        cout << "freeHead: nullptr\n\n";
     }
 
     Chunk* currentChunk = getTrueHead();
 
     while(currentChunk != nullptr){
 
-        // absnext , absprev, Next, and Prev are both Chunk* so they are converted to normal so we can compare to Ptr
+        // absnext , absprev, Next, and Prev are both Chunk* so they are converted to startLoc so we can compare to Ptr
         printf("Ptr: %-14p\n", currentChunk->startLoc);
         printf("{ Free:  %-5s", currentChunk->Free ? "true" : "false");
         printf("| AbsNext: %-14p", (currentChunk->AbsNext != nullptr) ? currentChunk->AbsNext->startLoc : nullptr);
         printf("| Size: %-*zu", (int)round(log10(memorySize)), currentChunk->chunkSize);
-        printf("| startIndex: %-*d", (int)round(log10(memorySize))-1, currentChunk->startIndex);
+        printf("| startIndex: %-*zu", (int)round(log10(memorySize))-1, currentChunk->startIndex);
         printf("| AbsPrev: %-14p", (currentChunk->AbsPrev != nullptr) ? currentChunk->AbsPrev->startLoc : nullptr);
         printf("| next: %-14p", (currentChunk->next != nullptr) ? currentChunk->next->startLoc : nullptr);
         printf("| prev: %-14p", (currentChunk->prev != nullptr) ? currentChunk->prev->startLoc : nullptr);
-        std::cout << "}\n" << endl;
+        std::cout << "}\n\n";
         currentChunk = currentChunk->AbsNext;
         
 
     }
-    cout << "ENDOFMEMORY" << endl;
+    cout << "ENDOFMEMORY\n";
 }
 
 Chunk* Allocator::merge(Chunk *newFree){
@@ -409,26 +393,21 @@ void* Allocator::calloc(size_t number, size_t size){
 }
 
 void* Allocator::realloc(void* ptr, size_t size){
-    if (size == 0){
+    if(size == 0){
+        free(ptr);
         return nullptr;
     }
-    if (ptr == nullptr){
+    if(ptr == nullptr){
         return nullptr;
     }
 
     Chunk* target = getTrueHead();
     Chunk* prevFree = nullptr;
-    while (target->startLoc != ptr){
+    while(target->startLoc != ptr){
         target = target->AbsNext;
         if(target->Free){
             prevFree = target;
         }
-        if (target == ptr){
-            break;
-        }
-    }
-    if(target == nullptr){
-        return nullptr;
     }
     
     // Check if its even possible to perform the new reallocation
@@ -459,7 +438,7 @@ void* Allocator::realloc(void* ptr, size_t size){
             return target->startLoc;
         }
         else{
-            int targetSize = target->chunkSize;
+            std::size_t targetSize = target->chunkSize;
             // ptr is target->starloc
             this->free(ptr);
             void* newBlock = this->malloc(size);
