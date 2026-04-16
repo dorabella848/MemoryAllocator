@@ -1,57 +1,22 @@
 #include <cstdint>
-struct Chunk;
+struct chunk;
 
 class Allocator {
     private:
         std::size_t memorySize;
-        std::size_t freeMemory;
         uint8_t* memoryPool;
-        Chunk* occHead = nullptr;
-        Chunk* freeHead = nullptr;
+        chunk* freeHead = nullptr;
         /*
         * returns a free block that is the result of merging any adjacent free blocks
         */
-        Chunk* merge(Chunk* newFree);
-        /*
-        * Returns a chunk of the opposite type that is considered "adjacent" when in context
-        * of the opposite type memory pool
-        * 
-        * Returns a nullptr if no opposite type chunk is found
-        * 
-        * This chunk may occur after or before the initialChunk
-        */
-        Chunk* findOppReference(Chunk* initialChunk);
-        /*
-        * Inserts a chunk into the opposite free type list by Updating the next, prev, and free vars of a chunk
-        * 
-        * ref chunk is the closest chunk behind or after toInsert of the opposite type
-        * The intial chunk must at the very least have its absNext and absPrev variables properly assigned
-        * 
-        * No reference chunk is required if the opposite type list is empty
-        */
-        void insert(Chunk *toInsert, Chunk *refChunk=nullptr);
+        chunk* merge(chunk* newFree);
         /*
         * Sets chunkSize for a chunk
         *
         * If the chunkSize is equal to 0, then the function also calls orphan().
         * Outputs an error to the console if the newSize is < 0.
         */
-        void updateSize(Chunk* target, std::size_t newSize);
-        /*
-        * Creates a chunk for a given size which starts after the remaining memory 
-        * of a parent chunk.
-        *
-        * This works by splitting a given parentChunk into two parts, one of size newChunkSz and another the remaining memory
-        * parentChunk can be both free and occupied (realloc).
-        * 
-        * The remainder of parentChunk occurs before the newly divided chunk of chunkSize in order to
-        * not update parentChunk's ptr.
-        * 
-        * The update to parentChunk's memory is done through updateSize().
-        * 
-        * Warning: Having two free chunks next to eachother is technically an error.
-        */
-        Chunk* splitChunk(Chunk* parentChunk, std::size_t newChunkSz);
+        void updateSize(chunk* target, std::size_t newSize);
         
     public:
         Allocator(std::size_t numBytes);
@@ -64,19 +29,7 @@ class Allocator {
         /*
         * Returns a Chunk* that points to the first free chunk.
         */
-        Chunk* getFreeHead();
-        /*
-        * Returns a Chunk* that points to the first occupied chunk.
-        */
-        Chunk* getOccHead();
-        /*
-        * Returns a Chunk* that points to the chunk that occurs at the start of the memory pool.
-        */
-        Chunk* getTrueHead();
-        /*
-        * Returns the remaining free memory.
-        */
-        std::size_t getFreeMemory();
+        chunk* getFreeHead();
         /*
         * Returns the total memory reserved for the memory pool.
         */
@@ -97,6 +50,21 @@ class Allocator {
         * Allocates a chunk of {size} bytes and returns a void* to the chunk.
         */
         void* malloc(std::size_t size);
+        /*
+        * Finds the free block that occurs before or after an index
+        * Prefers after over before
+        * free blocks are not necessarily adjacent
+        */
+        chunk* findNearFree(size_t startingIndex);
+        /*
+        * Find the length of an occupied block by iterating through the memoryPool.
+        * Begins at the starting index of the block (where * occurs/occured)
+        * returns the total reserved space (including the initial reserve char)
+        * ends when either running into another * (denoting the start of a different occupied space)
+        * or when it reaches the starting index of nextFree
+        * if nextFree is nullptr it assumes that no free chunk occurs after starting index
+        */
+        std::size_t findOccLength(std::size_t startingIndex, chunk* nextFree);
         /*
         * Unreserves the memory for a given chunk in the memory pool.
         */
