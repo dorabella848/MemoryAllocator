@@ -57,6 +57,10 @@ class Allocator {
         */
         chunk* findNearFree(size_t startingIndex);
         /*
+        * Insert a new free chunk into the free list
+        */
+        void insertNewFree(chunk* newFree, chunk* nearFree);
+        /*
         * Find the length of an occupied block by iterating through the memoryPool.
         * Begins at the starting index of the block (where * occurs/occured)
         * returns the total reserved space (including the initial reserve char)
