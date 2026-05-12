@@ -55,7 +55,7 @@ class Allocator {
         * Prefers after over before
         * free blocks are not necessarily adjacent
         */
-        chunk* findNearFree(size_t startingIndex);
+        chunk* findNearFree(std::size_t startingIndex);
         /*
         * Insert a new free chunk into the free list
         */
