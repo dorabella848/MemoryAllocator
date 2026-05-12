@@ -10,6 +10,10 @@ using namespace std;
 Allocator::Allocator(size_t numBytes){
     memorySize = numBytes;
     memoryPool = new uint8_t[memorySize];
+    // Initialize all bytes
+    for (size_t i = 0; i < memorySize; i++){
+        memoryPool[i] = ' ';
+    }
     freeHead = new chunk(0, memorySize);
     (*freeHead).startLoc = &memoryPool[0];
 };
@@ -31,7 +35,6 @@ Allocator::~Allocator(){
     }
 }
 
-
 chunk* Allocator::getFreeHead(){
     return freeHead;
 }
@@ -52,61 +55,56 @@ void Allocator::updateSize(chunk* target, size_t newSize)
     }
 }
 void Allocator::printChunks(){
-    cout << "\nTotal Memory: " << memorySize << "\n";
-
-    if(freeHead->startIndex != 0){
-        cout << "occHead: " << &memoryPool[0] << "\n";
-    }
-    else{
-        cout << "occHead: nullptr\n";
-    }
-    if(freeHead != nullptr){
-        cout << "freeHead: " << freeHead->startLoc << "\n\n";
-    }
-    else{
-        cout << "freeHead: nullptr\n\n";
-    }
-
-    // Account for the occurence that the first chunk may be occupied
-    if(freeHead->startIndex != 0){
+    size_t curIndex = 0;
+    chunk* currentChunk = getFreeHead();
+    // True = Free 
+    // False = Occupied
+    bool curType = false;
+    // Account for the occurence that the first chunk may be free
+    if((freeHead != nullptr) && (freeHead->startIndex == 0)){
         printf("Ptr: %-14p\n", &memoryPool[0]);
-        printf("{ Free:  %-8s", "Occupied");
+        printf("{ State:  %-8s", "Free");
         printf("| Size: %-*zu", (int)round(log10(memorySize)), freeHead->chunkSize);
-        printf("| startIndex: %-*zu", (int)round(log10(memorySize))-1, 0);
+        printf("| startIndex: %-*d", (int)round(log10(memorySize))-1, 0);
         cout << "}\n\n";
+        // Begin searrch after free chunk
+        curIndex = freeHead->chunkSize;
+        currentChunk = currentChunk->next;
     }
 
     // Alternate between occupied and free chunks since there can be no free chunks adjacent to one another
-    chunk* currentChunk = getFreeHead();
-    while(currentChunk != nullptr){
+    while(curIndex < memorySize-1){
         // Print the current free chunk's statistics
-        printf("Ptr: %-14p\n", currentChunk->startLoc);
-        printf("{ Free:  %-8s", "Free");
-        printf("| Size: %-*zu", (int)round(log10(memorySize)), currentChunk->chunkSize);
-        printf("| startIndex: %-*zu", (int)round(log10(memorySize)), currentChunk->startIndex);
-        printf("| next: %-14p", (currentChunk->next != nullptr) ? currentChunk->next->startLoc : nullptr);
-        printf("| prev: %-14p", (currentChunk->prev != nullptr) ? currentChunk->prev->startLoc : nullptr);
-        cout << "}\n\n";
-
-        // Print the occupied chunk's "statistics"
-
-        size_t nextOccStart = currentChunk->startIndex + currentChunk->startIndex;
-        bool nextOccExists = nextOccStart < memorySize;
-        if(nextOccExists){
-            printf("Ptr: %-14p\n", &memoryPool[nextOccStart]);
-            printf("{ Free:  %-8s", "Occupied");
-            if(currentChunk->next != nullptr){
-                printf("| Size: %-*zu", (int)round(log10(memorySize)), currentChunk->next->startIndex - nextOccStart);
-            }
-            else{
-                printf("| Size: %-*zu", (int)round(log10(memorySize)), memorySize - nextOccStart);
-            }
-            printf("| startIndex: %-*zu", (int)round(log10(memorySize)), nextOccStart);
+        if(curType){
+            printf("Ptr: %-14p\n", currentChunk->startLoc);
+            printf("{ State:  %-8s", "Free");
+            printf("| Size: %-*zu", (int)round(log10(memorySize)), currentChunk->chunkSize);
+            printf("| startIndex: %-*zu", (int)round(log10(memorySize)), currentChunk->startIndex);
+            printf("| next: %-14p", (currentChunk->next != nullptr) ? currentChunk->next->startLoc : nullptr);
+            printf("| prev: %-14p", (currentChunk->prev != nullptr) ? currentChunk->prev->startLoc : nullptr);
             cout << "}\n\n";
+            curType = false;
+            curIndex += currentChunk->chunkSize;
+            currentChunk = currentChunk->next;
         }
-        currentChunk = currentChunk->next;
-        
+        else{
+            // Print the occupied chunk's "statistics"
 
+            // The maximum number of bytes to check for occupied size before switching to free
+            size_t occSize = findOccLength(curIndex, currentChunk);
+            printf("Ptr: %-14p\n", &memoryPool[curIndex]);
+            printf("{ State:  %-8s", "Occupied");
+            printf("| Size: %-*zu", (int)round(log10(memorySize)), occSize);
+            printf("| startIndex: %-*zu", (int)round(log10(memorySize)), curIndex);
+            cout << "}\n\n";
+            curIndex += occSize;
+            if(curIndex >= getMemoryTotal()){
+                return;
+            }
+            else if(currentChunk != nullptr && curIndex == currentChunk->startIndex){
+                curType = true;
+            }
+        }
     }
     cout << "ENDOFMEMORY\n";
 }
@@ -133,7 +131,7 @@ chunk* Allocator::merge(chunk *newFree){
 
 void* Allocator::malloc(size_t size){
 
-    if(size <= 0){
+    if(size == 0){
         return nullptr;
     }
 
@@ -160,10 +158,14 @@ void* Allocator::malloc(size_t size){
 
 size_t Allocator::findOccLength(size_t startingIndex, chunk* nextFree=nullptr){
     size_t size = 1;
+    size_t upperLimit = 0;
     if(nextFree == nullptr){
-        return memorySize - startingIndex + 1;
+        upperLimit = memorySize;
     }
-    while((memoryPool[startingIndex + size] != '*') && (nextFree->startIndex != startingIndex + size)){
+    else{
+        upperLimit = nextFree->startIndex;
+    }
+    while((startingIndex + size < upperLimit) && (memoryPool[startingIndex + size] != '*')){
         size += 1;
     }
     // Return the counted indexes plus the starting occupied character
@@ -175,10 +177,7 @@ chunk* Allocator::findNearFree(size_t startingIndex){
 
     // Find the free chunk that occurs just before the occupied chunk
     while(currentFree != nullptr){
-        if(currentFree->startIndex > startingIndex){
-            break;
-        }
-        else if(currentFree->next == nullptr){
+        if((currentFree->startIndex > startingIndex) || (currentFree->next == nullptr)){
             break;
         }
         currentFree = currentFree->next;
@@ -206,6 +205,9 @@ void Allocator::insertNewFree(chunk* newFree, chunk* nearFree){
 }
 
 void Allocator::free(void* ptr){
+    if(ptr == nullptr){
+        return;
+    }
     size_t occOffset = (uint8_t*)ptr - memoryPool - 1;
     // Check if ptr is an occupied block
     if(memoryPool[occOffset] == '*'){
