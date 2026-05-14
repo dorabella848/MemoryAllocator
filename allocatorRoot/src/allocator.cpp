@@ -60,12 +60,16 @@ void Allocator::printChunks(){
     // True = Free 
     // False = Occupied
     bool curType = false;
+
+    cout << "Memory Size: " << memorySize << "\n";
     // Account for the occurence that the first chunk may be free
     if((freeHead != nullptr) && (freeHead->startIndex == 0)){
         printf("Ptr: %-14p\n", &memoryPool[0]);
         printf("{ State:  %-8s", "Free");
         printf("| Size: %-*zu", (int)round(log10(memorySize)), freeHead->chunkSize);
-        printf("| startIndex: %-*d", (int)round(log10(memorySize))-1, 0);
+        printf("| startIndex: %-*d", (int)round(log10(memorySize)), 0);
+        printf("| next: %-14p", (freeHead->next != nullptr) ? freeHead->next->startLoc : nullptr);
+        printf("| prev: %-14p", (freeHead->prev != nullptr) ? freeHead->prev->startLoc : nullptr);
         cout << "}\n\n";
         // Begin searrch after free chunk
         curIndex = freeHead->chunkSize;
@@ -281,7 +285,7 @@ void* Allocator::realloc(void* ptr, size_t size){
             // nearby free chunks 
             void* newBlock = this->malloc(size);
             if(newBlock == nullptr){
-                return nullptr;
+                return ptr;
             }
             this->free(ptr);
             memmove(newBlock, ptr, occSize-1);
