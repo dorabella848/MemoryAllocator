@@ -1,11 +1,11 @@
 #include "memoryAllocator/stl.hpp"
 #include <string>
 #include <iostream>
-
+#include "chunk.hpp"
+using namespace std;
 int main()
 {
-  Allocator alloc(100);
-  void* ptr = alloc.malloc(55);
-  alloc.realloc(ptr, 4);
+  Allocator alloc(8192);
+  
   alloc.printChunks();
 };
