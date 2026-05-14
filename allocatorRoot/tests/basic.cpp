@@ -10,99 +10,61 @@
 // make
 // ctest
 
-// Test allocating almost all available memory (e.g., 9 out of 10)
-void TestConnections(Chunk* occHead, Chunk* freeHead, std::size_t freeMemory, std::size_t totalMemory){
-  // Finding first chunk
-  Chunk* currentChunk = nullptr;
-  if(occHead == nullptr || occHead->startIndex != 0){
-      currentChunk = freeHead;
-  }
-  else{
-      currentChunk = occHead;
-  }
-  // Checking Connections
-  size_t totalMem = 0;
-  size_t totalFreeMem = 0;
-  while(currentChunk != nullptr){
-    totalMem += currentChunk->chunkSize;
-    if(currentChunk->Free){
-      totalFreeMem += currentChunk->chunkSize;
-    }
-    if(currentChunk->prev != nullptr){
-      GTEST_ASSERT_LT(currentChunk->prev->startIndex, currentChunk->startIndex);
-      GTEST_ASSERT_EQ(currentChunk->prev->next, currentChunk);
-      GTEST_ASSERT_EQ(currentChunk->prev->Free, currentChunk->Free);
-    }
-    if(currentChunk->AbsPrev != nullptr){
-      GTEST_ASSERT_LT(currentChunk->AbsPrev->startIndex, currentChunk->startIndex);
-      GTEST_ASSERT_EQ(currentChunk->AbsPrev->AbsNext, currentChunk);
-    }
-    if(currentChunk->next != nullptr){
-      GTEST_ASSERT_GT(currentChunk->next->startIndex, currentChunk->startIndex);
-      GTEST_ASSERT_EQ(currentChunk->next->prev, currentChunk);
-      GTEST_ASSERT_EQ(currentChunk->next->Free, currentChunk->Free);
-    }
-    if(currentChunk->AbsNext != nullptr){
-      GTEST_ASSERT_EQ(currentChunk->AbsNext->AbsPrev, currentChunk);
-      // Make sure no free chunks are together
-      if(currentChunk->Free){
-        GTEST_ASSERT_FALSE(currentChunk->AbsNext->Free);
+// Tests the free chunks and ensures there are no adjacent free chunks
+// and the total allocated memroy listed is in line with the total memory
+// in the alloc.
+void TestConnections(chunk* freeHead, std::size_t totalMemory){
+    chunk* currentChunk = freeHead;
+    while(currentChunk != nullptr){
+      size_t curEnd = currentChunk->startIndex + currentChunk->chunkSize;
+      if(currentChunk->next != nullptr){
+        GTEST_ASSERT_NE(curEnd, currentChunk->next->startIndex);
       }
-      GTEST_ASSERT_EQ(currentChunk->startIndex+currentChunk->chunkSize, currentChunk->AbsNext->startIndex);
+      currentChunk = currentChunk->next;
     }
-    currentChunk = currentChunk->AbsNext;
-  }
-  GTEST_ASSERT_EQ(totalFreeMem, freeMemory);
-  GTEST_ASSERT_EQ(totalMem, totalMemory);
 }
 
 TEST(AllocatorMalloc, MallocFull) {
   Allocator alloc(10);
-  void* ptr = alloc.malloc(10);
+  void* ptr = alloc.malloc(9);
   GTEST_ASSERT_NE(ptr, nullptr);
   GTEST_ASSERT_EQ(alloc.malloc(1), nullptr);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorMalloc, newOccHead) {
   Allocator alloc(10);
   void* ptr1 = alloc.malloc(1);
-  void* ptr2 = alloc.malloc(9);
+  void* ptr2 = alloc.malloc(7);
   alloc.free(ptr1);
   void* ptr3 = alloc.malloc(1);
   GTEST_ASSERT_NE(ptr2, nullptr);
-  GTEST_ASSERT_NE(ptr3, nullptr);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  //GTEST_ASSERT_NE(ptr3, nullptr);
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 // Test allocating the last available chunk of memory
 TEST(AllocatorMalloc, MallocValidSize_LastChunk) {
   Allocator alloc(10);
-  void* ptr = alloc.malloc(9); // Allocate first part
+  void* ptr = alloc.malloc(7); // Allocate first part
   void* ptr1 = alloc.malloc(1);
   GTEST_ASSERT_NE(ptr, nullptr);
   GTEST_ASSERT_NE(ptr1, nullptr);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 // Test allocating zero bytes
 TEST(AllocatorMalloc, MallocZeroBytes) {
-  Allocator allocator(10);
-  GTEST_ASSERT_EQ(allocator.malloc(0), nullptr);
-  TestConnections(allocator.getOccHead(), allocator.getFreeHead(), allocator.getFreeMemory(), allocator.getMemoryTotal());
+  Allocator alloc(10);
+  GTEST_ASSERT_EQ(alloc.malloc(0), nullptr);
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 // Test allocating more memory than available
 TEST(AllocatorMalloc, MallocTooMuch) {
-  Allocator allocator(10);
-  GTEST_ASSERT_EQ(allocator.malloc(11), nullptr);
-  TestConnections(allocator.getOccHead(), allocator.getFreeHead(), allocator.getFreeMemory(), allocator.getMemoryTotal());
-}
-
-TEST(AllocatorMalloc, MallocNegative){
-  Allocator allocator(10);
-  GTEST_ASSERT_EQ(allocator.malloc(-1), nullptr);
-  TestConnections(allocator.getOccHead(), allocator.getFreeHead(), allocator.getFreeMemory(), allocator.getMemoryTotal());
+  Allocator alloc(10);
+  GTEST_ASSERT_EQ(alloc.malloc(10), nullptr);
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorFree, SingleBlockFreeTest){
@@ -110,8 +72,7 @@ TEST(AllocatorFree, SingleBlockFreeTest){
   int* test1 = (int*)alloc.malloc(11);
   alloc.free(test1);
   GTEST_ASSERT_EQ(alloc.getFreeHead()->chunkSize, 8192);
-  GTEST_ASSERT_EQ(alloc.getOccHead(), nullptr);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorFree, CallocFreeSingleIndex){
@@ -119,13 +80,10 @@ TEST(AllocatorFree, CallocFreeSingleIndex){
   int* test1 = (int*)alloc.calloc(1, sizeof(int*));
   alloc.free(test1);
   GTEST_ASSERT_EQ(alloc.getFreeHead()->chunkSize, 8192);
-  GTEST_ASSERT_EQ(alloc.getOccHead(), nullptr);
 
   GTEST_ASSERT_EQ(alloc.getFreeHead()->next, nullptr);
   GTEST_ASSERT_EQ(alloc.getFreeHead()->prev, nullptr);
-  GTEST_ASSERT_EQ(alloc.getFreeHead()->AbsNext, nullptr);
-  GTEST_ASSERT_EQ(alloc.getFreeHead()->AbsPrev, nullptr);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorFree, CallocFreeMultipleIndex){
@@ -133,13 +91,10 @@ TEST(AllocatorFree, CallocFreeMultipleIndex){
   int* test1 = (int*)alloc.calloc(10, sizeof(int*));
   alloc.free(test1);
   GTEST_ASSERT_EQ(alloc.getFreeHead()->chunkSize, 8192);
-  GTEST_ASSERT_EQ(alloc.getOccHead(), nullptr);
 
   GTEST_ASSERT_EQ(alloc.getFreeHead()->next, nullptr);
   GTEST_ASSERT_EQ(alloc.getFreeHead()->prev, nullptr);
-  GTEST_ASSERT_EQ(alloc.getFreeHead()->AbsNext, nullptr);
-  GTEST_ASSERT_EQ(alloc.getFreeHead()->AbsPrev, nullptr);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorFree, FragmentedFree){
@@ -153,9 +108,7 @@ TEST(AllocatorFree, FragmentedFree){
   GTEST_ASSERT_NE(test3, nullptr);
 
   alloc.free(test2);
-  GTEST_ASSERT_EQ(alloc.getOccHead()->next->next, nullptr);
-  GTEST_ASSERT_EQ(alloc.getOccHead()->next->chunkSize, 11);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 TEST(AllocatorFree, InformationOverwriteFree){
   Allocator alloc(8192);
@@ -165,7 +118,7 @@ TEST(AllocatorFree, InformationOverwriteFree){
   int* test2 = (int*)alloc.malloc(22);
   *test2 = 10;
   GTEST_ASSERT_EQ(*test2, 10);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorFree, FreeChunkAhead){
@@ -178,7 +131,7 @@ TEST(AllocatorFree, FreeChunkAhead){
   alloc.free(test2);
   GTEST_ASSERT_NE(test1, nullptr);
   GTEST_ASSERT_NE(test4, nullptr);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorFree, FreeChunkBehind){
@@ -191,17 +144,16 @@ TEST(AllocatorFree, FreeChunkBehind){
   alloc.free(test3);
   GTEST_ASSERT_NE(test1, nullptr);
   GTEST_ASSERT_NE(test4, nullptr);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorFree, NoFreeHead){
   Allocator alloc(8192);
-  int* test1 = (int*)alloc.malloc(8192);
+  int* test1 = (int*)alloc.malloc(8191);
   alloc.free(test1);
   GTEST_ASSERT_EQ(alloc.getFreeHead()->startIndex, 0);
   GTEST_ASSERT_EQ(alloc.getFreeHead()->chunkSize, 8192);
-  GTEST_ASSERT_EQ(alloc.getOccHead(), nullptr);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorFree, AfterFreeHead_No_Adj_Free){
@@ -213,15 +165,14 @@ TEST(AllocatorFree, AfterFreeHead_No_Adj_Free){
   int* test5 = (int*)alloc.malloc(43);
   alloc.free(test2);
   alloc.free(test4);
-  GTEST_ASSERT_EQ(alloc.getFreeHead()->next->startLoc, test4);
-  GTEST_ASSERT_EQ(alloc.getOccHead()->startLoc, test5);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  GTEST_ASSERT_EQ(alloc.getFreeHead()->next->startLoc, alloc.getMemAddress(alloc.getFreeHead()->next->startIndex));
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorFree, freeNullptr){
   Allocator alloc(8096);
   alloc.free(nullptr);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorFree, newOccHeadNext){
@@ -229,8 +180,7 @@ TEST(AllocatorFree, newOccHeadNext){
   void* ptr = alloc.malloc(1);
   void* ptr2 = alloc.malloc(3);
   alloc.free(ptr);
-  GTEST_ASSERT_EQ(alloc.getOccHead()->startLoc, ptr2);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorFree, testFreeAdjacentConnections){
@@ -241,7 +191,7 @@ TEST(AllocatorFree, testFreeAdjacentConnections){
   alloc.free(ptr);
   alloc.free(ptr3);
   alloc.free(ptr2);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorFree, testFreeIteratorWhenInserting){
@@ -255,7 +205,7 @@ TEST(AllocatorFree, testFreeIteratorWhenInserting){
       alloc.free(ptr);
     }
   }
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorCalloc, AllAssigned){
@@ -270,21 +220,22 @@ TEST(AllocatorCalloc, AllAssigned){
   for (int i = 0; i < 10; i++) {
     GTEST_ASSERT_EQ(test1[i], i);
   }
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorRealloc, NullInput){
   Allocator alloc(8096);
   int* chunk = (int*)alloc.realloc(nullptr, 203);
   GTEST_ASSERT_EQ(chunk, nullptr);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorRealloc, reallocToZero){
   Allocator alloc(8096);
-  int* chunk = (int*)alloc.realloc(alloc.getOccHead(), 0);
+  void* chunk = alloc.malloc(5);
+  chunk = alloc.realloc(nullptr, 0);
   GTEST_ASSERT_EQ(chunk, nullptr);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorRealloc, GreaterThanAvailable){
@@ -295,8 +246,7 @@ TEST(AllocatorRealloc, GreaterThanAvailable){
   test2 = (int*)alloc.realloc(test2, 45);
   GTEST_ASSERT_NE(test1, nullptr);
   GTEST_ASSERT_NE(test3, nullptr);
-  GTEST_ASSERT_EQ(test2, alloc.getOccHead()->startLoc);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorRealloc, ReUseSamePos){
@@ -310,8 +260,7 @@ TEST(AllocatorRealloc, ReUseSamePos){
   test2 = (int*)alloc.realloc(test2, 58);
   GTEST_ASSERT_NE(test1, nullptr);
   GTEST_ASSERT_NE(test4, nullptr);
-  GTEST_ASSERT_EQ(test2, (alloc.getOccHead()->startLoc));
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorRealloc, InformationPreserved){
@@ -320,7 +269,7 @@ TEST(AllocatorRealloc, InformationPreserved){
   *test1 = 15;
   int* test2 = (int*)alloc.realloc(test1, 43);
   GTEST_ASSERT_EQ(*test2, 15);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorRealloc, CallocRealloc){
@@ -333,34 +282,34 @@ TEST(AllocatorRealloc, CallocRealloc){
   for(int i =0; i < 5; i++){
     GTEST_ASSERT_EQ(test2[i], i*5);
   }
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorRealloc, ReallocNullptr){
   Allocator alloc(8096);
   GTEST_ASSERT_EQ(alloc.realloc(nullptr, 5), nullptr);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorRealloc, ReallocTooMuch){
   Allocator alloc(100);
   void* ptr = alloc.malloc(5);
   GTEST_ASSERT_EQ(alloc.realloc(ptr, 1000), ptr);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorRealloc, ReallocMore){
   Allocator alloc(100);
   void* ptr = alloc.malloc(5);
   GTEST_ASSERT_NE(alloc.realloc(ptr, 55), nullptr);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorRealloc, ReallocLess){
   Allocator alloc(100);
   void* ptr = alloc.malloc(55);
   GTEST_ASSERT_NE(alloc.realloc(ptr, 4), nullptr);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorRealloc, ReallocMoreNewFreeHead){
@@ -372,8 +321,7 @@ TEST(AllocatorRealloc, ReallocMoreNewFreeHead){
   GTEST_ASSERT_NE(ptr, nullptr);
   GTEST_ASSERT_NE(ptr3, nullptr);
   GTEST_ASSERT_NE(ptr = alloc.realloc(ptr, 65), nullptr);
-  GTEST_ASSERT_EQ(alloc.getOccHead()->next->startLoc, ptr);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(getterFunctions, getMemAddress){

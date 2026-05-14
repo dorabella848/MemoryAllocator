@@ -28,17 +28,9 @@ public:
     alloc->free(p);
   }
   /*
-  * Returns a Chunk* that points to the first free chunk.
+  * Returns a chunk* that points to the first free chunk.
   */
-  Chunk* getFreeHead() { return alloc->getFreeHead(); };
-  /*
-  * Returns a Chunk* that points to the first occupied chunk.
-  */
-  Chunk* getOccHead() { return alloc->getOccHead(); };
-  /*
-  * Returns the remaining free memory.
-  */
-  std::size_t getFreeMemory() { return alloc->getFreeMemory(); };
+  chunk* getFreeHead() { return alloc->getFreeHead(); };
   /*
   * Returns the total memory reserved for the memory pool.
   */

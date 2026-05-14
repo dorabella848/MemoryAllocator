@@ -1,29 +1,18 @@
 #include <cstddef>
-struct Chunk {
-    std::size_t startIndex;
+struct chunk {
     void* startLoc;
+    std::size_t startIndex;
     std::size_t chunkSize;
-    bool Free;
-    // Next free/occupied chunk dependent on current free state
-    Chunk* next;
-    // Previous free/occupied chunk dependent on current free state
-    Chunk* prev;
-    // Absolute next chunk in the memory pool regardless of current free state
-    Chunk* AbsNext;
-    // Absolute previous chunk in the memory pool regardless of current free state
-    Chunk* AbsPrev;
-
+    chunk* next;
+    chunk* prev;
     
 
-    Chunk(std::size_t startingIndex, std::size_t chunkSize, bool Free) : 
+    chunk(std::size_t startingIndex, std::size_t chunkSize) : 
     startIndex(startingIndex), 
     chunkSize(chunkSize), 
-    Free(Free), 
     startLoc(nullptr), 
     next(nullptr), 
-    prev(nullptr),
-    AbsNext(nullptr),
-    AbsPrev(nullptr) {};
+    prev(nullptr) {};
     /*
     * Removes next and prev connections to a chunk
     * if the chunk has a chunksize of 0, also remove abs ptrs
@@ -38,20 +27,9 @@ struct Chunk {
         }
         this->next = nullptr;
         this->prev = nullptr;
-
-        if(this->chunkSize == 0){
-            if(this->AbsPrev != nullptr){
-                this->AbsPrev->AbsNext = this->AbsNext;
-            }
-            if(this->AbsNext != nullptr){
-                this->AbsNext->AbsPrev = this->AbsPrev;
-            }
-            this->AbsNext = nullptr;
-            this->AbsPrev = nullptr;
-        }
     }
 
-    ~Chunk() {
+    ~chunk() {
 
     }
 };
