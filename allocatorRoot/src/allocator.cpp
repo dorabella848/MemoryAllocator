@@ -284,7 +284,7 @@ void* Allocator::realloc(void* ptr, size_t size){
                 return nullptr;
             }
             this->free(ptr);
-            memmove(newBlock, ptr, occSize);
+            memmove(newBlock, ptr, occSize-1);
             return newBlock;    
         }  
     }
