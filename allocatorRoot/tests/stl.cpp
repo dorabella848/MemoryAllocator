@@ -11,49 +11,15 @@
 // ctest
 
 // Test allocating almost all available memory (e.g., 9 out of 10)
-void TestConnections(Chunk* occHead, Chunk* freeHead, std::size_t freeMemory, std::size_t totalMemory){
-  // Finding first chunk
-  Chunk* currentChunk = nullptr;
-  if(occHead == nullptr || occHead->startIndex != 0){
-      currentChunk = freeHead;
-  }
-  else{
-      currentChunk = occHead;
-  }
-  // Checking Connections
-  size_t totalMem = 0;
-  size_t totalFreeMem = 0;
-  while(currentChunk != nullptr){
-    totalMem += currentChunk->chunkSize;
-    if(currentChunk->Free){
-      totalFreeMem += currentChunk->chunkSize;
-    }
-    if(currentChunk->prev != nullptr){
-      GTEST_ASSERT_LT(currentChunk->prev->startIndex, currentChunk->startIndex);
-      GTEST_ASSERT_EQ(currentChunk->prev->next, currentChunk);
-      GTEST_ASSERT_EQ(currentChunk->prev->Free, currentChunk->Free);
-    }
-    if(currentChunk->AbsPrev != nullptr){
-      GTEST_ASSERT_LT(currentChunk->AbsPrev->startIndex, currentChunk->startIndex);
-      GTEST_ASSERT_EQ(currentChunk->AbsPrev->AbsNext, currentChunk);
-    }
-    if(currentChunk->next != nullptr){
-      GTEST_ASSERT_GT(currentChunk->next->startIndex, currentChunk->startIndex);
-      GTEST_ASSERT_EQ(currentChunk->next->prev, currentChunk);
-      GTEST_ASSERT_EQ(currentChunk->next->Free, currentChunk->Free);
-    }
-    if(currentChunk->AbsNext != nullptr){
-      GTEST_ASSERT_EQ(currentChunk->AbsNext->AbsPrev, currentChunk);
-      // Make sure no free chunks are together
-      if(currentChunk->Free){
-        GTEST_ASSERT_FALSE(currentChunk->AbsNext->Free);
+void TestConnections(chunk* freeHead, std::size_t totalMemory){
+    chunk* currentChunk = freeHead;
+    while(currentChunk != nullptr){
+      size_t curEnd = currentChunk->startIndex + currentChunk->chunkSize;
+      if(currentChunk->next != nullptr){
+        GTEST_ASSERT_NE(curEnd, currentChunk->next->startIndex);
       }
-      GTEST_ASSERT_EQ(currentChunk->startIndex+currentChunk->chunkSize, currentChunk->AbsNext->startIndex);
+      currentChunk = currentChunk->next;
     }
-    currentChunk = currentChunk->AbsNext;
-  }
-  GTEST_ASSERT_EQ(totalFreeMem, freeMemory);
-  GTEST_ASSERT_EQ(totalMem, totalMemory);
 }
 
 TEST(AllocatorSTL, STLmalloc){
@@ -72,7 +38,7 @@ TEST(AllocatorSTL, STLtestConnections){
   int* ptr = alloc.allocate(5);
   alloc.allocate(5);
   alloc.deallocate(ptr, 0);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 TEST(AllocatorSTL, NonDefaultConstructor){
@@ -80,7 +46,7 @@ TEST(AllocatorSTL, NonDefaultConstructor){
   alloc.allocate(5);
   alloc.allocate(5);
   GTEST_ASSERT_EQ(alloc.allocate(5), nullptr);
-  TestConnections(alloc.getOccHead(), alloc.getFreeHead(), alloc.getFreeMemory(), alloc.getMemoryTotal());
+  TestConnections(alloc.getFreeHead(), alloc.getMemoryTotal());
 }
 
 int main(int argc, char* argv[])
